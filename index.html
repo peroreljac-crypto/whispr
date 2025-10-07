@@ -117,6 +117,27 @@
   90% { opacity: 0; }
   100% { opacity: 0; transform: translateY(-80px); }
 }
+    /* ghost "shhh..." */
+.shhh-ghost{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,0.28);
+  font-family: 'VT323', monospace;
+  font-size: 32px;                 /* pojačaj/smanji po želji */
+  letter-spacing: 1px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6;                      /* iznad pozadine i whispers teksta */
+  text-shadow: 0 0 6px rgba(255,255,255,0.10);
+  transition: opacity 0.6s ease;
+}
+.shhh-ghost.show{ opacity: 1; }
+    .content {
+  position: relative;
+  z-index: 5;
+}
   </style>
 </head>
 <body>
@@ -149,9 +170,42 @@
   randomizeWhispers();
   setInterval(randomizeWhispers, 15000);
 </script>
+   <script>
+  // kreira i prikaže "shhh..." pa ga makne
+  function spawnShhh(){
+    // makni postojeći ako već traje (spriječi spam)
+    const old = document.querySelector('.shhh-ghost');
+    if (old) old.remove();
+
+    const s = document.createElement('div');
+    s.className = 'shhh-ghost';
+    s.textContent = 'shhh...';
+    document.body.appendChild(s);
+
+    // fade in
+    requestAnimationFrame(() => s.classList.add('show'));
+
+    // nakon 1.4s počni gasiti, pa ukloni
+    setTimeout(() => {
+      s.classList.remove('show');
+      setTimeout(() => s.remove(), 600);
+    }, 1400);
+  }
+
+  // ciljaj H1 unutar .content (tvoj "whispr")
+  const titleEl = document.querySelector('.content h1');
+
+  if (titleEl){
+    // hover na desktopu
+    titleEl.addEventListener('mouseenter', spawnShhh);
+    // tap na mobitelu
+    titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
+  }
+</script>
 </body>
 
 </html>
+
 
 
 
