@@ -539,6 +539,7 @@ function setWalletLabel(pkStr) {
       const res = await prov.connect({ onlyIfTrusted: false });
       const pk = prov.publicKey ?? res?.publicKey;
       setWalletLabel(pk?.toString?.() || '(no key)');
+      renderWalletUI(pk?.toString?.());   
       console.log('[PHANTOM] connected:', pk?.toString?.());
     } catch (err) {
       console.error('[PHANTOM] connect error:', err);
@@ -760,6 +761,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
