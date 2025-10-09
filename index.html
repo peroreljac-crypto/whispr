@@ -243,6 +243,7 @@
     <span>not again...</span>
     <span>silence speaks first.</span>
   </div>
+  <div class="live-whispers"></div>
   <div class="content">
     <h1>whispr</h1>
     
@@ -403,10 +404,38 @@
       .catch(err=>console.error('[whispr] test write FAIL', err));
   });
 })();
+  const liveLayer = document.querySelector('.live-whispers');
+
+function floatLiveWhisper(text, strong = false) {
+  if (!liveLayer || !text) return;
+  const span = document.createElement('span');
+  span.textContent = text;
+  span.style.position = 'absolute';
+  span.style.top = (10 + Math.random() * 80) + '%';
+  span.style.left = (5 + Math.random() * 90) + '%';
+  span.style.color = strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
+  span.style.fontSize = (18 + Math.floor(Math.random() * 6)) + 'px';
+  span.style.textShadow = strong ? '0 0 10px rgba(255,255,255,0.28)' : '0 0 6px rgba(255,255,255,0.12)';
+  span.style.animation = 'whisperMove 12s linear 1';
+  span.style.opacity = '0';
+  liveLayer.appendChild(span);
+  setTimeout(() => span.remove(), 12000);
+}
+
+// 🔁 sluša samo nove whispere iz baze
+db.ref('whispers')
+  .orderByChild('time')
+  .limitToLast(20)
+  .on('child_added', snap => {
+    const w = snap.val();
+    if (!w || !w.text) return;
+    floatLiveWhisper(w.text, false);
+  });
 </script>
 </body>
 
 </html>
+
 
 
 
