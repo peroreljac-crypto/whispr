@@ -235,6 +235,26 @@
   position: relative;
   z-index: 5;
 }
+    .wallet-row{
+  margin-top:10px;
+  display:flex; gap:10px; align-items:center; justify-content:center;
+  opacity:.9;
+}
+#walletStatus{ color:#9c9c9c; font-size:14px; }
+
+.admin-bar{
+  margin-top:10px;
+  display:flex; gap:10px; align-items:center; justify-content:center;
+  font-size:14px; color:#bbb;
+}
+#toggleMode{
+  padding:6px 10px; font-family:'VT323', monospace;
+  border:1px solid #2a2a2a; background:#0b0b0b; color:#fff; border-radius:6px;
+}
+
+/* zaključan UI */
+#whisperInput[disabled]{ opacity:.6; cursor:not-allowed; }
+#whisperSend[disabled]{ opacity:.6; cursor:not-allowed; }
   </style>
 </head>
 <body>
@@ -257,6 +277,16 @@
   <button id="whisperSend" aria-label="send whisper">send 🔇</button>
   <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
   <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
+</div>
+    <div class="wallet-row">
+  <button id="connectPhantom" type="button">connect phantom</button>
+  <span id="walletStatus">not connected</span>
+</div>
+
+<div id="adminBar" class="admin-bar" style="display:none">
+  <span>mode:</span>
+  <button id="toggleMode" type="button">free</button>
+  <small id="modeHint">(holders-only is OFF)</small>
 </div>
     <div class="footer-links">
   <a href="https://x.com/whisprcoin" target="_blank">x</a>
@@ -406,7 +436,161 @@ setInterval(async () => {
     console.error('[whispr] auto-clean error:', e);
   }
 }, 20000); // pokreće se svakih 20 sekundi
+/* ====== SOLANA GATE: FREE → HOLDERS-ONLY (koristi tvoje varijable) ====== */
 
+/** KOLIKO TREBA DRŽATI */
+const WHISPR_MIN_AMOUNT = 1;
+
+/** SPL MINT ADRESA — zamijeni čim izdaš token */
+const WHISPR_MINT = 'YOUR_SPL_MINT_ADDRESS';
+
+/** oslonimo se na postojeći db; ako ga nema, probaj iz firebase-a */
+const DB = (typeof db !== 'undefined') ? db : (firebase && firebase.database ? firebase.database() : null);
+if (!DB) { console.error('[whispr] DB not ready'); }
+
+/** globalno stanje */
+let requireOwnership = false; // dok je false → FREE
+let walletPubkey = null;
+let lastHolderOk = false;
+
+/** elementi (koristimo tvoje postojeće) */
+const connectBtn  = document.getElementById('connectPhantom');
+const walletLabel = document.getElementById('walletStatus');
+const adminBar    = document.getElementById('adminBar');
+const toggleMode  = document.getElementById('toggleMode');
+const modeHint    = document.getElementById('modeHint');
+
+/** tvoje postojeće varijable: */
+const inputEl  = (typeof input  !== 'undefined')  ? input  : document.getElementById('whisperInput');
+const statusEl = (typeof status !== 'undefined') ? status : document.getElementById('whisperStatus');
+
+/** prikaži admin bar samo s ?admin=1 */
+const isAdmin = location.search.includes('admin=1');
+if (isAdmin && adminBar) adminBar.style.display = 'flex';
+
+/** CONFIG toggle u Firebaseu: /config/requireOwnership (true/false) */
+const cfgRef = DB.ref('config/requireOwnership');
+
+/** ako ne postoji, postavi default (FREE) */
+cfgRef.once('value').then(s => { if (s.val() === null) cfgRef.set(false); });
+
+/** slušaj promjene moda globalno */
+cfgRef.on('value', snap => {
+  requireOwnership = !!snap.val();
+  updateModeUI();
+  updateGateUI();
+});
+
+/** UI helpers */
+function updateModeUI(){
+  if (!toggleMode || !modeHint) return;
+  toggleMode.textContent = requireOwnership ? 'holders-only' : 'free';
+  modeHint.textContent   = requireOwnership ? '(holders-only is ON)' : '(holders-only is OFF)';
+}
+function updateGateUI(){
+  if (!inputEl || !whisperSend) return;
+  if (!requireOwnership){
+    inputEl.disabled = false; whisperSend.disabled = false;
+    if (inputEl.placeholder.toLowerCase().includes('connect wallet')){
+      inputEl.placeholder = 'send a whispr.';
+    }
+  } else {
+    if (lastHolderOk){
+      inputEl.disabled = false; whisperSend.disabled = false;
+    } else {
+      inputEl.disabled = true;  whisperSend.disabled = true;
+      inputEl.placeholder = 'connect wallet to whisper.';
+    }
+  }
+}
+
+/** Phantom connect */
+async function connectPhantom(){
+  if (!window.solana || !window.solana.isPhantom){
+    alert('Install Phantom wallet to continue.');
+    return null;
+  }
+  try{
+    const resp = await window.solana.connect();
+    walletPubkey = resp.publicKey.toString();
+    if (walletLabel) walletLabel.textContent = walletPubkey.slice(0,4)+'…'+walletPubkey.slice(-4);
+
+    if (requireOwnership){
+      lastHolderOk = await hasWhispr(walletPubkey, WHISPR_MINT, WHISPR_MIN_AMOUNT);
+      updateGateUI();
+    }
+    return walletPubkey;
+  }catch(e){
+    console.warn('phantom connect cancelled', e?.message);
+    return null;
+  }
+}
+
+/** SPL balance provjera (RPC) */
+async function hasWhispr(owner, mintAddress, minAmount){
+  try{
+    const rpc = 'https://api.mainnet-beta.solana.com'; // devnet: 'https://api.devnet.solana.com'
+    const body = {
+      jsonrpc:"2.0", id:1, method:"getTokenAccountsByOwner",
+      params:[ owner, { mint: mintAddress }, { encoding:"jsonParsed" } ]
+    };
+    const res = await fetch(rpc, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    }).then(r=>r.json());
+    const accounts = res?.result?.value || [];
+    let balance = 0;
+    for (const a of accounts){
+      const ui = a?.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
+      if (typeof ui === 'number') balance += ui;
+    }
+    return balance >= minAmount;
+  }catch(e){
+    console.error('balance check error', e);
+    return false;
+  }
+}
+
+/** admin toggle — piše u Firebase (simple pass, promijeni kad želiš) */
+if (isAdmin && toggleMode){
+  toggleMode.addEventListener('click', async () => {
+    const pass = prompt('admin pass (privremeno):');
+    if (pass !== 'whispr-admin') return alert('nope.');
+    await cfgRef.set(!requireOwnership);
+  });
+}
+
+/** connect phantom gumb */
+if (connectBtn){
+  connectBtn.addEventListener('click', async () => { await connectPhantom(); });
+}
+
+/** ⛔ Zamjena tvoje sendWhisper logike: ubacujemo gate na VRH pa zovemo tvoju istu funkciju */
+const __originalSendWhisper = sendWhisper; // spremi tvoju postojeću
+
+window.sendWhisper = async function(){
+  // HOLDERS-ONLY gate
+  if (requireOwnership){
+    if (!walletPubkey){
+      await connectPhantom();
+      if (!walletPubkey) return; // user odustao
+    }
+    lastHolderOk = await hasWhispr(walletPubkey, WHISPR_MINT, WHISPR_MIN_AMOUNT);
+    if (!lastHolderOk){
+      if (statusEl){ statusEl.textContent = 'need 1 $WHISPR to whisper'; setTimeout(()=>statusEl.textContent='', 2000); }
+      updateGateUI();
+      return;
+    }
+  }
+  // sve ok → pozovi tvoju originalnu funkciju (ne diramo floatWhisper, db, itd.)
+  return __originalSendWhisper();
+};
+
+// inicijalni UI
+updateModeUI();
+updateGateUI();
+
+/* ====== /SOLANA GATE ====== */
     // 6) Eventi (klik + Enter)
     button.addEventListener('click', sendWhisper);
     input.addEventListener('keydown', e => {
@@ -459,6 +643,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
