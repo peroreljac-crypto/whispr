@@ -556,6 +556,48 @@ function setWalletLabel(pkStr) {
     
 /** 🔹 KRAJ PHANTOM CONNECTA 🔹 */
 
+    /** 🔹 LJEPŠI PHANTOM UI 🔹 */
+function shorten(pk){ 
+  return pk ? pk.slice(0,4) + '…' + pk.slice(-4) : ''; 
+}
+
+async function copyToClipboard(text){ 
+  try { 
+    await navigator.clipboard.writeText(text); 
+    alert('Address copied'); 
+  } catch(e){ console.error(e); } 
+}
+
+function renderWalletUI(pkStr){
+  const btn   = document.getElementById('connectPhantom');
+  const label = document.getElementById('walletStatus');
+  if (!btn) return;
+
+  if (pkStr){
+    // prikaz nakon connecta
+    btn.textContent = 'Connected';
+    if (label){
+      label.innerHTML = `
+        <span id="addrShort" style="font-family:monospace">${shorten(pkStr)}</span>
+        <button id="copyPk" type="button" style="margin-left:8px">Copy</button>
+        <button id="disconnectPk" type="button" style="margin-left:4px">Disconnect</button>`;
+    }
+
+    // gumbi
+    document.getElementById('copyPk')?.addEventListener('click', ()=>copyToClipboard(pkStr));
+    document.getElementById('disconnectPk')?.addEventListener('click', async ()=>{
+      try { await window.solana?.disconnect?.(); } catch(e){}
+      renderWalletUI(null);
+      // opcionalno: zaključaj whisper input
+      if (typeof setWhisperGate === 'function') setWhisperGate(false);
+    });
+  } else {
+    // reset UI kad se odspoji
+    btn.textContent = 'Connect Phantom';
+    if (label) label.textContent = '(not connected)';
+  }
+}
+
 /** UI helpers */
 function updateModeUI(){
   if (!toggleMode || !modeHint) return;
@@ -718,6 +760,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
