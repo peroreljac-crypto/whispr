@@ -480,42 +480,80 @@ cfgRef.on('value', snap => {
   updateModeUI();
   updateGateUI();
 });
-    document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('connectPhantom');
-  const label = document.getElementById('walletStatus');
-  function log(...a){ console.log('[PHANTOM]', ...a); }
-
-  if (window.solana?.isPhantom && window.solana?.isConnected) {
-    label.textContent = window.solana.publicKey?.toString?.() || '(connected)';
+   /* 1) Forsiraj HTTPS (osim localhosta) */
+(() => {
+  const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+  if (!isLocal && location.protocol !== 'https:') {
+    location.replace('https://' + location.host + location.pathname + location.search + location.hash);
   }
+})();
 
-  window.solana?.on?.('connect', (pk) => {
-    log('connect event', pk?.toString?.());
-    label.textContent = pk?.toString?.();
-  });
+/* 2) Provjeri da gumb nije submit (da ne reloada stranicu) */
+const _btnConnect = document.getElementById('connectPhantom');
+if (_btnConnect) _btnConnect.setAttribute('type', 'button');
 
-  window.solana?.on?.('accountChanged', (pk) => {
-    log('accountChanged', pk?.toString?.());
-    label.textContent = pk ? pk.toString() : '(disconnected)';
-  });
+/* 3) Ako si imao neki STARI handler za connect — makni ga (klon trik) */
+if (_btnConnect) {
+  const clone = _btnConnect.cloneNode(true);
+  _btnConnect.replaceWith(clone);
+}
 
-  btn?.addEventListener('click', async (e) => {
+/* 4) Uvijek izaberi baš Phantom providera (ako ih ima više) */
+function getPhantom() {
+  const w = window;
+  if (w.solana?.isPhantom) return w.solana;
+  if (Array.isArray(w.solana?.providers)) {
+    const p = w.solana.providers.find(p => p.isPhantom);
+    if (p) return p;
+  }
+  return null;
+}
+
+/* 5) UI helper */
+function setWalletLabel(pkStr) {
+  const label = document.getElementById('walletStatus');
+  if (label) label.textContent = pkStr || '(not connected)';
+}
+
+/* 6) Eventi + klik handler */
+(function initPhantomConnect() {
+  const btn = document.getElementById('connectPhantom');
+  if (!btn) return;
+
+  const provider = getPhantom();
+
+  // Eventi (ako postoje)
+  provider?.on?.('connect', (pk) => setWalletLabel(pk?.toString?.()));
+  provider?.on?.('accountChanged', (pk) => setWalletLabel(pk ? pk.toString() : '(disconnected)'));
+
+  // Glavni click — reset pa connect
+  btn.addEventListener('click', async (e) => {
     e.preventDefault();
+    const prov = getPhantom();
+    if (!prov) {
+      alert('Phantom extension nije detektiran.\n- Isključi adblock/shields\n- Ne koristi iFrame/preview\n- Otvori https://www.whisprcoin.com');
+      return;
+    }
     try {
-      if (!window.solana?.isPhantom) {
-        alert('Phantom nije detektiran.');
-        return;
-      }
-      const res = await window.solana.connect({ onlyIfTrusted: false });
-      const pk = window.solana.publicKey ?? res?.publicKey;
-      label.textContent = pk?.toString?.() || '(no key?)';
-      console.log('[PHANTOM] publicKey:', pk?.toString?.());
+      try { await prov.disconnect(); } catch(_) {}   // očisti pending stanje
+      const res = await prov.connect({ onlyIfTrusted: false });
+      const pk = prov.publicKey ?? res?.publicKey;
+      setWalletLabel(pk?.toString?.() || '(no key)');
+      console.log('[PHANTOM] connected:', pk?.toString?.());
     } catch (err) {
       console.error('[PHANTOM] connect error:', err);
       alert('Phantom connect error: ' + (err?.message || err));
     }
   });
-});
+
+  // Ako je već spojen nakon refresh-a
+  if (provider?.isConnected && provider?.publicKey) {
+    setWalletLabel(provider.publicKey.toString());
+  } else {
+    setWalletLabel('(not connected)');
+  }
+})();
+    
 /** 🔹 KRAJ PHANTOM CONNECTA 🔹 */
 
 /** UI helpers */
@@ -680,6 +718,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
