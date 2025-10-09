@@ -292,96 +292,111 @@
     titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
   }
 </script>
-  <!-- 🔇 WHISPR LIVE SCRIPT -->
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
 <script>
-console.log('[whispr] init…');
+(function(){
+  console.log('[whispr] boot');
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
-  authDomain: "whisprcoin.firebaseapp.com",
-  databaseURL: "https://whisprcoin-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "whisprcoin",
-  storageBucket: "whisprcoin.firebasestorage.app",
-  messagingSenderId: "1063673504189",
-  appId: "1:1063673504189:web:938b00b8a6871b0a5db2d4",
-  measurementId: "G-ZYWYEXVG4F"
-};
+  // 1) Init kad se sve učita (da elementi postoje)
+  window.addEventListener('load', function(){
+    console.log('[whispr] dom ready');
 
-// Firebase
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    // 2) Firebase config
+    const cfg = {
+      apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
+      authDomain: "whisprcoin.firebaseapp.com",
+      databaseURL: "https://whisprcoin-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "whisprcoin",
+      storageBucket: "whisprcoin.firebasestorage.app",
+      messagingSenderId: "1063673504189",
+      appId: "1:1063673504189:web:938b00b8a6871b0a5db2d4",
+      measurementId: "G-ZYWYEXVG4F"
+    };
 
-// elementi iz HTML-a
-const whisperInput  = document.getElementById('whisperInput');
-const whisperSend   = document.getElementById('whisperSend');
-const whisperStatus = document.getElementById('whisperStatus');
-const whisperLayer  = document.querySelector('.whispers');
+    if (!window.firebase) { console.error('[whispr] Firebase SDK nije učitan'); return; }
+    if (!firebase.apps.length) { firebase.initializeApp(cfg); console.log('[whispr] firebase init OK'); }
+    const db = firebase.database();
 
-// funkcija za prikaz lebdećeg whispera
-function floatWhisper(text, glow = false) {
-  if (!whisperLayer) return;
-  const span = document.createElement('span');
-  span.textContent = text;
-  span.style.position = 'absolute';
-  span.style.top = (10 + Math.random() * 80) + '%';
-  span.style.left = (5 + Math.random() * 90) + '%';
-  span.style.color = glow ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
-  span.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
-  span.style.textShadow = glow
-      ? '0 0 10px rgba(255,255,255,0.28)'
-      : '0 0 6px rgba(255,255,255,0.1)';
-  span.style.animation = 'whisperMove 12s linear 1';
-  span.style.opacity = '0';
-  whisperLayer.appendChild(span);
-  setTimeout(()=>span.remove(), 12000);
-}
+    // 3) DOM elementi
+    const layer  = document.querySelector('.whispers');
+    const input  = document.getElementById('whisperInput');
+    const button = document.getElementById('whisperSend');
+    const status = document.getElementById('whisperStatus');
 
-// slanje whispera
-async function sendWhisper() {
-  const text = whisperInput.value.trim();
-  if (!text) return;
-  console.log('[whispr] sending:', text);
+    console.log('[whispr] elements:', {layer: !!layer, input: !!input, button: !!button});
 
-  // instant prikaz
-  floatWhisper(text, true);
+    if (!input || !button) {
+      console.error('[whispr] MISSING #whisperInput ili #whisperSend u HTML-u');
+      return;
+    }
 
-  // zapis u bazu
-  try {
-    await db.ref('whispers').push({
-      text,
-      time: Date.now()
+    // 4) Helper za nacrtati lebdeći whisper
+    function floatWhisper(text, strong){
+      if (!layer) return;
+      const s = document.createElement('span');
+      s.textContent = text;
+      s.style.position = 'absolute';
+      s.style.top  = (10 + Math.random()*80) + '%';
+      s.style.left = (5 + Math.random()*90) + '%';
+      s.style.color = strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
+      s.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
+      s.style.textShadow = strong ? '0 0 10px rgba(255,255,255,0.28)' : '0 0 6px rgba(255,255,255,0.1)';
+      s.style.animation = 'whisperMove 12s linear 1';
+      s.style.opacity = '0';
+      layer.appendChild(s);
+      setTimeout(()=>s.remove(), 12000);
+    }
+
+    // 5) Slanje u bazu
+    async function sendWhisper(){
+      const text = (input.value || '').trim();
+      if (!text) return;
+      console.log('[whispr] sending:', text);
+
+      // instant feedback
+      floatWhisper(text, true);
+
+      try {
+        await db.ref('whispers').push({ text, time: Date.now() });
+        console.log('[whispr] saved');
+        if (status){ status.textContent = 'sent.'; setTimeout(()=>status.textContent='', 1500); }
+      } catch(e){
+        console.error('[whispr] save ERROR', e);
+        if (status){ status.textContent = 'error.'; setTimeout(()=>status.textContent='', 2000); }
+      }
+
+      input.value = '';
+    }
+
+    // 6) Eventi (klik + Enter)
+    button.addEventListener('click', sendWhisper);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
     });
-    console.log('[whispr] saved');
-    whisperStatus.textContent = 'sent.';
-  } catch (e) {
-    console.error('[whispr] error saving', e);
-    whisperStatus.textContent = 'error.';
-  }
 
-  whisperInput.value = '';
-  setTimeout(()=> whisperStatus.textContent = '', 2000);
-}
+    // 7) Live feed (zadnjih 20)
+    db.ref('whispers').orderByChild('time').limitToLast(20).on('value', snap => {
+      const data = snap.val();
+      console.log('[whispr] feed update:', !!data);
+      if (!data) return;
+      const list = Object.values(data).sort((a,b)=>a.time-b.time);
+      list.forEach(item => floatWhisper(item.text, false));
+    });
 
-// eventi
-whisperSend.addEventListener('click', sendWhisper);
-whisperInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    sendWhisper();
-  }
-});
-
-// realtime feed
-db.ref('whispers').limitToLast(20).on('value', snapshot => {
-  const data = snapshot.val();
-  if (!data) return;
-  Object.values(data).forEach(w => floatWhisper(w.text));
-});
-
+    // 8) mini check upis
+    db.ref('connection-test').set({ok:true, t:Date.now()})
+      .then(()=>console.log('[whispr] test write OK'))
+      .catch(err=>console.error('[whispr] test write FAIL', err));
+  });
+})();
 </script>
 </body>
 
 </html>
+
 
 
 
