@@ -139,6 +139,70 @@
   position: relative;
   z-index: 5;
 }
+      .whisper-box{
+  margin-top: 28px;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 92vw;
+}
+
+#whisperInput{
+  width: min(420px, 80vw);
+  padding: 10px 12px;
+  border: 1px solid #2a2a2a;
+  background: rgba(12,12,12,.8);
+  color: #eaeaea;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  outline: none;
+  border-radius: 6px;
+  transition: border-color .2s ease, background .2s ease;
+}
+#whisperInput::placeholder{ color:#6f6f6f; }
+#whisperInput:focus{
+  border-color:#555;
+  background: rgba(18,18,18,.9);
+}
+
+#whisperSend{
+  padding: 10px 14px;
+  border: 1px solid #2a2a2a;
+  background: rgba(18,18,18,.85);
+  color:#cfcfcf;
+  font-family: 'VT323', monospace;
+  font-size:18px;
+  border-radius:6px;
+  cursor:pointer;
+  transition: transform .08s ease, background .2s ease, color .2s;
+}
+#whisperSend:hover{ background:#1b1b1b; color:#fff; }
+#whisperSend:active{ transform: translateY(1px); }
+
+.whisper-note{
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color:#6f6f6f;
+  margin-top: 6px;
+  opacity:.8;
+}
+
+.whisper-status{
+  width:100%;
+  text-align:center;
+  font-size:16px;
+  color:#a8ffa8;
+  margin-top:8px;
+  min-height: 1em; /* da ne “skače” layout */
+  visibility: hidden;
+}
+.whisper-status.show{ visibility: visible; }
+
+/* osiguraj da je content iznad pozadine/whispers slojeva */
+.content{ position: relative; z-index: 5; }
   </style>
 </head>
 <body>
@@ -154,6 +218,13 @@
     <h1>whispr</h1>
     
     <small>the value is in silence. 🔇</small>
+    <div class="whisper-box">
+  <input id="whisperInput" type="text" maxlength="140"
+         placeholder="write your whisper below... no one will know.">
+  <button id="whisperSend" aria-label="send whisper">send 🔇</button>
+  <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
+  <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
+</div>
     <div class="footer-links">
   <a href="https://x.com/whisprcoin" target="_blank">x</a>
   <a href="#" target="_blank">solscan (soon)</a>
@@ -203,9 +274,64 @@
     titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
   }
 </script>
+  <script>
+  // escape da netko ne ubaci HTML
+  function esc(s){
+    return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function spawnEphemeralWhisper(text){
+    // napravi span u .whispers sloju (isti stil kao ostali)
+    const layer = document.querySelector('.whispers');
+    if(!layer) return;
+
+    const span = document.createElement('span');
+    span.textContent = text;
+    // pozicija i animacija samo za ovaj šapat
+    span.style.top  = (10 + Math.random()*80) + '%';
+    span.style.left = (5 + Math.random()*90) + '%';
+    span.style.color = 'rgba(255,255,255,0.30)';
+    span.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
+    span.style.animation = 'whisperMove 12s linear 1';
+    span.style.opacity = '0';
+
+    layer.appendChild(span);
+
+    // makni ga nakon 12s da ne zatrpamo DOM
+    setTimeout(() => span.remove(), 12000);
+  }
+
+  (function initWhisperBox(){
+    const input = document.getElementById('whisperInput');
+    const btn   = document.getElementById('whisperSend');
+    const status= document.getElementById('whisperStatus');
+
+    if(!input || !btn) return;
+
+    function submitWhisper(){
+      const raw = (input.value || '').trim();
+      if(!raw) return;
+      const text = esc(raw.slice(0,140));
+      spawnEphemeralWhisper(text);
+
+      // status poruka “heard.”
+      status.textContent = 'heard.';
+      status.classList.add('show');
+      setTimeout(()=>{ status.classList.remove('show'); }, 1200);
+
+      input.value = '';
+    }
+
+    btn.addEventListener('click', submitWhisper);
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); submitWhisper(); }
+    });
+  })();
+</script>
 </body>
 
 </html>
+
 
 
 
