@@ -352,7 +352,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 
 <script>
-  // 🔧 Tvoj stvarni config (isti kao gore)
+  // 🔧 TVOJ CONFIG (ostavi ovako – ovo je tvoj)
   const firebaseConfig = {
     apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
     authDomain: "whisprcoin.firebaseapp.com",
@@ -364,63 +364,110 @@
     measurementId: "G-ZYWYEXVG4F"
   };
 
-  // 🔥 Pokreni Firebase
+  // 🔥 Init
   firebase.initializeApp(firebaseConfig);
-
-  // 🔗 Spoji se na Realtime Database
   const db = firebase.database();
+
+  // ✅ DIJAGNOSTIKA – moraš ovo vidjeti u konzoli (F12 → Console)
+  console.log("Firebase initialized:", firebase.apps.length);
+  console.log("DB URL:", firebaseConfig.databaseURL);
+
+  // ⛑️ Osiguraj da postoji .whispers sloj (ako ga nema u HTML-u)
+  let whisperLayer = document.querySelector('.whispers');
+  if (!whisperLayer) {
+    whisperLayer = document.createElement('div');
+    whisperLayer.className = 'whispers';
+    whisperLayer.style.position = 'fixed';
+    whisperLayer.style.inset = '0';
+    whisperLayer.style.zIndex = '0';
+    whisperLayer.style.pointerEvents = 'none';
+    document.body.appendChild(whisperLayer);
+  }
+
+  // 🎯 Elementi
   const whisperInput = document.getElementById('whisperInput');
-  const whisperSend = document.getElementById('whisperSend');
-  const whisperLayer = document.querySelector('.whispers');
+  const whisperSend  = document.getElementById('whisperSend');
 
+  // 🫧 Helper: nacrtaj lebdeći whisper
+  function floatWhisper(text, opts = {}) {
+    const span = document.createElement('span');
+    span.textContent = text;
+    span.style.position = 'absolute';
+    span.style.top  = (10 + Math.random() * 80) + '%';
+    span.style.left = (5 + Math.random() * 90) + '%';
+    span.style.color = opts.color || 'rgba(255,255,255,0.35)';
+    span.style.fontSize = (opts.size || (18 + Math.floor(Math.random()*6))) + 'px';
+    span.style.textShadow = opts.glow || '0 0 8px rgba(255,255,255,0.12)';
+    span.style.animation = 'whisperMove 12s linear 1';
+    span.style.opacity = '0';
+    whisperLayer.appendChild(span);
+    setTimeout(() => span.remove(), 12000);
+  }
+
+  // 🧹 Auto-čistimo stare (starije od 10 min) po vremenu
+  async function cleanupOld() {
+    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+    // orderByChild('time') jer sad zapisujemo time kao broj
+    const snap = await db.ref('whispers').orderByChild('time').endAt(tenMinutesAgo).once('value');
+    snap.forEach(child => db.ref('whispers/' + child.key).remove());
+  }
+
+  // 🚀 Slanje (koristimo push umjesto custom ID-ja – manje šanse za grešku)
   async function sendWhisper() {
-  const text = whisperInput.value.trim();
-  if (!text) return;
+    if (!whisperInput) return;
+    const text = whisperInput.value.trim();
+    if (!text) return;
 
-  const id = Date.now();
+    // 1) Lokalni instant feedback (jači glow za “moj” whisper)
+    floatWhisper(text, { color:'rgba(255,255,255,0.55)', glow:'0 0 10px rgba(255,255,255,0.28)', size: 20 });
 
-  // 1️⃣ pošalji whisper
-  await db.ref('whispers/' + id).set({
-    text,
-    time: new Date().toISOString()
+    // 2) Zapiši u bazu (realtime svima)
+    try {
+      await db.ref('whispers').push({
+        text,
+        time: Date.now()
+      });
+    } catch (e) {
+      console.error('DB write failed:', e);
+    }
+
+    // 3) Počisti stare
+    cleanupOld();
+
+    whisperInput.value = '';
+  }
+
+  // ⌨️ Eventi (Enter + klik)
+  if (whisperSend) whisperSend.addEventListener('click', sendWhisper);
+  if (whisperInput) whisperInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); sendWhisper(); }
   });
 
-  // 2️⃣ obriši stare whisper-e (starije od 10 min)
-  const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-  db.ref('whispers')
-    .orderByKey()
-    .endAt(tenMinutesAgo.toString())
-    .once('value', snap => {
-      snap.forEach(child => db.ref('whispers/' + child.key).remove());
-    });
-
-  whisperInput.value = '';
-}
-
-  db.ref('whispers').limitToLast(20).on('value', snapshot => {
+  // 👂 Live feed – zadnjih 20, realtime
+  db.ref('whispers').orderByChild('time').limitToLast(20).on('value', snapshot => {
     const data = snapshot.val();
-    if (!data) return;
+    // očisti ekran prije novog batcha
+    // (po želji komentiraj ako želiš “nagomilavanje”)
+    // whisperLayer.innerHTML = '';
 
-    whisperLayer.innerHTML = '';
-    const entries = Object.values(data);
-    entries.forEach(item => {
-      const span = document.createElement('span');
-      span.textContent = item.text;
-      span.style.top = (10 + Math.random() * 80) + '%';
-      span.style.left = (5 + Math.random() * 90) + '%';
-      span.style.color = 'rgba(255,255,255,0.35)';
-      span.style.fontSize = (18 + Math.floor(Math.random() * 6)) + 'px';
-      span.style.textShadow = '0 0 8px rgba(255,255,255,0.12)';
-      span.style.animation = 'whisperMove 12s linear 1';
-      span.style.opacity = '0';
-      whisperLayer.appendChild(span);
-      setTimeout(() => span.remove(), 12000);
+    if (!data) return;
+    // Prikaz svakog unosa (nasumična pozicija)
+    const list = Object.values(data);
+    // prikaži od starijih prema novijima
+    list.sort((a,b) => a.time - b.time).forEach(item => {
+      floatWhisper(item.text);
     });
   });
+
+  // 🧪 Minimalni “ping” zapis da potvrdiš u konzoli da piše (možeš ostaviti ili obrisati)
+  db.ref('connection-test').set({ ok: true, t: Date.now() })
+    .then(() => console.log('Test write OK'))
+    .catch(err => console.error('Test write FAIL', err));
 </script>
 </body>
 
 </html>
+
 
 
 
