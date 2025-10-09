@@ -480,6 +480,43 @@ cfgRef.on('value', snap => {
   updateModeUI();
   updateGateUI();
 });
+    document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('connectPhantom');
+  const label = document.getElementById('walletStatus');
+  function log(...a){ console.log('[PHANTOM]', ...a); }
+
+  if (window.solana?.isPhantom && window.solana?.isConnected) {
+    label.textContent = window.solana.publicKey?.toString?.() || '(connected)';
+  }
+
+  window.solana?.on?.('connect', (pk) => {
+    log('connect event', pk?.toString?.());
+    label.textContent = pk?.toString?.();
+  });
+
+  window.solana?.on?.('accountChanged', (pk) => {
+    log('accountChanged', pk?.toString?.());
+    label.textContent = pk ? pk.toString() : '(disconnected)';
+  });
+
+  btn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      if (!window.solana?.isPhantom) {
+        alert('Phantom nije detektiran.');
+        return;
+      }
+      const res = await window.solana.connect({ onlyIfTrusted: false });
+      const pk = window.solana.publicKey ?? res?.publicKey;
+      label.textContent = pk?.toString?.() || '(no key?)';
+      console.log('[PHANTOM] publicKey:', pk?.toString?.());
+    } catch (err) {
+      console.error('[PHANTOM] connect error:', err);
+      alert('Phantom connect error: ' + (err?.message || err));
+    }
+  });
+});
+/** 🔹 KRAJ PHANTOM CONNECTA 🔹 */
 
 /** UI helpers */
 function updateModeUI(){
@@ -643,6 +680,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
