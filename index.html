@@ -11,6 +11,8 @@
    body {
   margin: 0;
   height: 100vh;
+  background: url('https://raw.githubusercontent.com/whisprcoin/whispr/refs/heads/main/5.png') no-repeat center center fixed;
+  background-size: cover;
   color: #fff;
   font-family: 'VT323', monospace;
   display: flex;
@@ -21,31 +23,7 @@
   letter-spacing: 1px;
   backdrop-filter: brightness(0.7) blur(1px);
 }
-
-/* animirana pozadina */
-.bg {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background: url('https://raw.githubusercontent.com/whisprcoin/whispr/refs/heads/main/5.png') center center / cover no-repeat fixed;
-  filter: brightness(0.8) contrast(1.05);
-  will-change: transform, opacity, background-position;
-  animation: bgBreath 9s ease-in-out infinite, bgDrift 24s linear infinite;
-}
-
-/* lagano “disanje” slike */
-@keyframes bgBreath {
-  0%   { transform: scale(1);    opacity: .85; }
-  50%  { transform: scale(1.03); opacity: .95; }
-  100% { transform: scale(1);    opacity: .85; }
-}
-
-/* suptilni pomak slike lijevo-desno */
-@keyframes bgDrift {
-  0%   { background-position: 48% 50%; }
-  50%  { background-position: 52% 50%; }
-  100% { background-position: 48% 50%; }
-
+    
     h1 {
       font-size: 80px;
       margin-bottom: 10px;
@@ -164,7 +142,6 @@
   </style>
 </head>
 <body>
-    <div class="bg"></div>
   <div class="matrix-lines"></div>
    <div class="whispers">
     <span>it started again.</span>
@@ -229,6 +206,7 @@
 </body>
 
 </html>
+
 
 
 
