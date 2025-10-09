@@ -203,6 +203,23 @@
 
 /* osiguraj da je content iznad pozadine/whispers slojeva */
 .content{ position: relative; z-index: 5; }
+    .user-whisper {
+  color: rgba(255, 255, 255, 0.65) !important; /* jače vidljiv */
+  text-shadow: 0 0 8px rgba(255,255,255,0.15);
+  font-size: 22px !important;
+  letter-spacing: 1px;
+}
+    .content small {
+  display: block;
+  margin-top: 10px;
+  font-size: 18px;
+  color: rgba(255,255,255,0.65);
+}
+
+.whisper-box {
+  margin-top: 25px;   /* razmak ispod teksta */
+  margin-bottom: 25px; /* prije footera */
+}
   </style>
 </head>
 <body>
@@ -286,6 +303,7 @@
     if(!layer) return;
 
     const span = document.createElement('span');
+    span.className = 'user-whisper';
     span.textContent = text;
     // pozicija i animacija samo za ovaj šapat
     span.style.top  = (10 + Math.random()*80) + '%';
@@ -331,6 +349,7 @@
 </body>
 
 </html>
+
 
 
 
