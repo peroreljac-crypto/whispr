@@ -347,9 +347,81 @@
     });
   })();
 </script>
+  <!-- Firebase SDK (kompatibilna verzija za browser) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
+<script>
+  // 🔧 Tvoj stvarni config (isti kao gore)
+  const firebaseConfig = {
+    apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
+    authDomain: "whisprcoin.firebaseapp.com",
+    databaseURL: "https://whisprcoin-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "whisprcoin",
+    storageBucket: "whisprcoin.firebasestorage.app",
+    messagingSenderId: "1063673504189",
+    appId: "1:1063673504189:web:938b00b8a6871b0a5db2d4",
+    measurementId: "G-ZYWYEXVG4F"
+  };
+
+  // 🔥 Pokreni Firebase
+  firebase.initializeApp(firebaseConfig);
+
+  // 🔗 Spoji se na Realtime Database
+  const db = firebase.database();
+  const whisperInput = document.getElementById('whisperInput');
+  const whisperSend = document.getElementById('whisperSend');
+  const whisperLayer = document.querySelector('.whispers');
+
+  async function sendWhisper() {
+  const text = whisperInput.value.trim();
+  if (!text) return;
+
+  const id = Date.now();
+
+  // 1️⃣ pošalji whisper
+  await db.ref('whispers/' + id).set({
+    text,
+    time: new Date().toISOString()
+  });
+
+  // 2️⃣ obriši stare whisper-e (starije od 10 min)
+  const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+  db.ref('whispers')
+    .orderByKey()
+    .endAt(tenMinutesAgo.toString())
+    .once('value', snap => {
+      snap.forEach(child => db.ref('whispers/' + child.key).remove());
+    });
+
+  whisperInput.value = '';
+}
+
+  db.ref('whispers').limitToLast(20).on('value', snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    whisperLayer.innerHTML = '';
+    const entries = Object.values(data);
+    entries.forEach(item => {
+      const span = document.createElement('span');
+      span.textContent = item.text;
+      span.style.top = (10 + Math.random() * 80) + '%';
+      span.style.left = (5 + Math.random() * 90) + '%';
+      span.style.color = 'rgba(255,255,255,0.35)';
+      span.style.fontSize = (18 + Math.floor(Math.random() * 6)) + 'px';
+      span.style.textShadow = '0 0 8px rgba(255,255,255,0.12)';
+      span.style.animation = 'whisperMove 12s linear 1';
+      span.style.opacity = '0';
+      whisperLayer.appendChild(span);
+      setTimeout(() => span.remove(), 12000);
+    });
+  });
+</script>
 </body>
 
 </html>
+
 
 
 
