@@ -382,13 +382,34 @@
 
       input.value = '';
     }
+    // 🧹 AUTO-CLEAN svakih 20 sekundi
+setInterval(async () => {
+  try {
+    const snap = await db.ref('whispers').once('value');
+    const data = snap.val();
+    if (!data) return;
+
+    const now = Date.now();
+    const cutoff = now - 20000; // 20 sekundi
+
+    Object.entries(data).forEach(([key, val]) => {
+      if (val.time < cutoff) {
+        db.ref('whispers/' + key).remove();
+      }
+    });
+
+    console.log('[whispr] auto-clean done');
+  } catch (e) {
+    console.error('[whispr] auto-clean error:', e);
+  }
+}, 20000); // pokreće se svakih 20 sekundi
 
     // 6) Eventi (klik + Enter)
     button.addEventListener('click', sendWhisper);
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
     });
-
+  
     // 7) Live feed (zadnjih 20)
     db.ref('whispers').orderByChild('time').limitToLast(20).on('value', snap => {
       const data = snap.val();
@@ -435,6 +456,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
