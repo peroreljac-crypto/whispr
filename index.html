@@ -292,125 +292,97 @@
     titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
   }
 </script>
-  <!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-
+  <!-- 🔇 WHISPR LIVE SCRIPT -->
 <script>
-  console.log('[whispr] boot');
+console.log('[whispr] init…');
 
-  // 1) Tvoj Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
-    authDomain: "whisprcoin.firebaseapp.com",
-    databaseURL: "https://whisprcoin-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "whisprcoin",
-    storageBucket: "whisprcoin.firebasestorage.app",
-    messagingSenderId: "1063673504189",
-    appId: "1:1063673504189:web:938b00b8a6871b0a5db2d4",
-    measurementId: "G-ZYWYEXVG4F"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
+  authDomain: "whisprcoin.firebaseapp.com",
+  databaseURL: "https://whisprcoin-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "whisprcoin",
+  storageBucket: "whisprcoin.firebasestorage.app",
+  messagingSenderId: "1063673504189",
+  appId: "1:1063673504189:web:938b00b8a6871b0a5db2d4",
+  measurementId: "G-ZYWYEXVG4F"
+};
 
-  // 2) Init Firebase
+// Firebase
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// elementi iz HTML-a
+const whisperInput  = document.getElementById('whisperInput');
+const whisperSend   = document.getElementById('whisperSend');
+const whisperStatus = document.getElementById('whisperStatus');
+const whisperLayer  = document.querySelector('.whispers');
+
+// funkcija za prikaz lebdećeg whispera
+function floatWhisper(text, glow = false) {
+  if (!whisperLayer) return;
+  const span = document.createElement('span');
+  span.textContent = text;
+  span.style.position = 'absolute';
+  span.style.top = (10 + Math.random() * 80) + '%';
+  span.style.left = (5 + Math.random() * 90) + '%';
+  span.style.color = glow ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
+  span.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
+  span.style.textShadow = glow
+      ? '0 0 10px rgba(255,255,255,0.28)'
+      : '0 0 6px rgba(255,255,255,0.1)';
+  span.style.animation = 'whisperMove 12s linear 1';
+  span.style.opacity = '0';
+  whisperLayer.appendChild(span);
+  setTimeout(()=>span.remove(), 12000);
+}
+
+// slanje whispera
+async function sendWhisper() {
+  const text = whisperInput.value.trim();
+  if (!text) return;
+  console.log('[whispr] sending:', text);
+
+  // instant prikaz
+  floatWhisper(text, true);
+
+  // zapis u bazu
   try {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-      console.log('[whispr] firebase init OK');
-    } else {
-      console.log('[whispr] firebase already init');
-    }
-  } catch(e){
-    console.error('[whispr] firebase init ERROR', e);
+    await db.ref('whispers').push({
+      text,
+      time: Date.now()
+    });
+    console.log('[whispr] saved');
+    whisperStatus.textContent = 'sent.';
+  } catch (e) {
+    console.error('[whispr] error saving', e);
+    whisperStatus.textContent = 'error.';
   }
-  const db = firebase.database();
 
-  // 3) DOM hook – čekaj elemente
-  window.addEventListener('load', () => {
-    console.log('[whispr] dom ready');
+  whisperInput.value = '';
+  setTimeout(()=> whisperStatus.textContent = '', 2000);
+}
 
-    const whisperLayer = document.querySelector('.whispers');
-    const input  = document.getElementById('whisperInput');
-    const button = document.getElementById('whisperSend');
+// eventi
+whisperSend.addEventListener('click', sendWhisper);
+whisperInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendWhisper();
+  }
+});
 
-    console.log('[whispr] elements:', {
-      layer: !!whisperLayer, input: !!input, button: !!button
-    });
+// realtime feed
+db.ref('whispers').limitToLast(20).on('value', snapshot => {
+  const data = snapshot.val();
+  if (!data) return;
+  Object.values(data).forEach(w => floatWhisper(w.text));
+});
 
-    if (!input || !button) {
-      console.error('[whispr] MISSING #whisperInput ili #whisperSend u HTML-u');
-      return;
-    }
-
-    // helper za crtanje plutajućeg whispera
-    function floatWhisper(text, opts = {}) {
-      if (!whisperLayer) return;
-      const span = document.createElement('span');
-      span.textContent = text;
-      span.style.position = 'absolute';
-      span.style.top  = (10 + Math.random() * 80) + '%';
-      span.style.left = (5 + Math.random() * 90) + '%';
-      span.style.color = opts.color || 'rgba(255,255,255,0.35)';
-      span.style.fontSize = (opts.size || (18 + Math.floor(Math.random()*6))) + 'px';
-      span.style.textShadow = opts.glow || '0 0 8px rgba(255,255,255,0.12)';
-      span.style.animation = 'whisperMove 12s linear 1';
-      span.style.opacity = '0';
-      whisperLayer.appendChild(span);
-      setTimeout(() => span.remove(), 12000);
-    }
-
-    async function cleanupOld(){
-      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-      try{
-        const snap = await db.ref('whispers').orderByChild('time').endAt(tenMinutesAgo).once('value');
-        snap.forEach(child => db.ref('whispers/' + child.key).remove());
-      }catch(e){
-        console.warn('[whispr] cleanup warn', e.message);
-      }
-    }
-
-    async function sendWhisper() {
-      const text = (input.value || '').trim();
-      if (!text) return;
-      console.log('[whispr] sending:', text);
-
-      // instant feedback
-      floatWhisper(text, { color:'rgba(255,255,255,0.55)', glow:'0 0 10px rgba(255,255,255,0.28)', size: 20 });
-
-      try{
-        await db.ref('whispers').push({ text, time: Date.now() });
-        console.log('[whispr] saved');
-      }catch(e){
-        console.error('[whispr] save ERROR', e);
-      }
-
-      cleanupOld();
-      input.value = '';
-    }
-
-    // events
-    button.addEventListener('click', sendWhisper);
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); sendWhisper(); }
-    });
-
-    // live feed
-    db.ref('whispers').orderByChild('time').limitToLast(20).on('value', snapshot => {
-      const data = snapshot.val();
-      console.log('[whispr] feed update, hasData=', !!data);
-      if (!data || !whisperLayer) return;
-      const list = Object.values(data).sort((a,b)=>a.time-b.time);
-      list.forEach(item => floatWhisper(item.text));
-    });
-
-    // minimalni test zapis da potvrdi konekciju
-    db.ref('connection-test').set({ ok:true, t: Date.now() })
-      .then(()=>console.log('[whispr] test write OK'))
-      .catch(err=>console.error('[whispr] test write FAIL', err));
-  });
 </script>
 </body>
 
 </html>
+
 
 
 
