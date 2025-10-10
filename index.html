@@ -709,54 +709,79 @@ updateModeUI();
 updateGateUI();
 
 /* ====== /SOLANA GATE ====== */
-    // 6) Eventi (klik + Enter)
-    button.addEventListener('click', sendWhisper);
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
-    });
-  
-    // 7) Live feed (zadnjih 20)
-    db.ref('whispers').orderByChild('time').limitToLast(20).on('value', snap => {
-      const data = snap.val();
-      console.log('[whispr] feed update:', !!data);
-      if (!data) return;
-      const list = Object.values(data).sort((a,b)=>a.time-b.time);
-      list.forEach(item => floatWhisper(item.text, false));
-    });
-
-    // 8) mini check upis
-    db.ref('connection-test').set({ok:true, t:Date.now()})
-      .then(()=>console.log('[whispr] test write OK'))
-      .catch(err=>console.error('[whispr] test write FAIL', err));
-  });
-})();
-  const liveLayer = document.querySelector('.live-whispers');
-
-function floatLiveWhisper(text, strong = false) {
-  if (!liveLayer || !text) return;
-  const span = document.createElement('span');
-  span.textContent = text;
-  span.style.position = 'absolute';
-  span.style.top = (10 + Math.random() * 80) + '%';
-  span.style.left = (5 + Math.random() * 90) + '%';
-  span.style.color = strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
-  span.style.fontSize = (18 + Math.floor(Math.random() * 6)) + 'px';
-  span.style.textShadow = strong ? '0 0 10px rgba(255,255,255,0.28)' : '0 0 6px rgba(255,255,255,0.12)';
-  span.style.animation = 'whisperMove 12s linear 1';
-  span.style.opacity = '0';
-  liveLayer.appendChild(span);
-  setTimeout(() => span.remove(), 12000);
+   script>
+/* ==== PHANTOM CONNECT — JEDINI IZVOR ISTINE ==== */
+function getPhantom() {
+  const w = window;
+  if (w.solana?.isPhantom) return w.solana;
+  if (Array.isArray(w.solana?.providers)) {
+    const p = w.solana.providers.find(p => p.isPhantom);
+    if (p) return p;
+  }
+  return null;
 }
 
-// 🔁 sluša samo nove whispere iz baze
-db.ref('whispers')
-  .orderByChild('time')
-  .limitToLast(20)
-  .on('child_added', snap => {
-    const w = snap.val();
-    if (!w || !w.text) return;
-    floatLiveWhisper(w.text, false);
+window.walletPubkey = window.walletPubkey || null;
+
+function setWalletLabel(pkStr) {
+  const label = document.getElementById('walletStatus');
+  if (label) label.textContent = pkStr || '(not connected)';
+}
+
+function afterConnect(provider){
+  try {
+    const pk = provider?.publicKey?.toBase58?.() || provider?.publicKey?.toString?.() || '';
+    window.walletPubkey = pk || null;
+    setWalletLabel(pk || '(connected)');
+    renderWalletUI(pk);
+    if (typeof startOwnersListener === 'function' && pk) startOwnersListener(pk);
+    if (typeof updateGateUI === 'function') updateGateUI();
+  } catch (e) {
+    console.warn('afterConnect error', e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('connectPhantom');
+  if (!btn) return;
+
+  btn.setAttribute('type', 'button');
+  const provider = getPhantom();
+
+  provider?.on?.('accountChanged', (pkObj) => {
+    const pk = pkObj ? (pkObj.toBase58?.() || pkObj.toString?.() || '') : '';
+    window.walletPubkey = pk || null;
+    setWalletLabel(pk || '(disconnected)');
+    renderWalletUI(pk || null);
+    if (typeof setWhisperGate === 'function') setWhisperGate(!!pk);
+    if (typeof updateGateUI === 'function') updateGateUI();
+    if (pk && typeof startOwnersListener === 'function') startOwnersListener(pk);
   });
+
+  if (provider?.isConnected && provider?.publicKey) {
+    afterConnect(provider);
+  } else {
+    setWalletLabel('(not connected)');
+  }
+
+  btn.onclick = async (e) => {
+    e.preventDefault();
+    const prov = getPhantom();
+    if (!prov) {
+      alert('Phantom nije detektiran. Isključi adblock/shields i otvori site izvan iFrame-a (https://whisprcoin.com).');
+      return;
+    }
+    try {
+      try { await prov.disconnect(); } catch(_) {}
+      await prov.connect({ onlyIfTrusted: false });
+      afterConnect(prov);
+    } catch (err) {
+      console.error('Phantom connect error:', err);
+      alert('Greška pri povezivanju: ' + (err?.message || err));
+    }
+  };
+});
+/* ==== /PHANTOM CONNECT ==== */
 </script>
   <!-- verifyOwnership + listener -->
 <script>
@@ -906,6 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </body>
 
 </html>
+
 
 
 
