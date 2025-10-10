@@ -442,7 +442,7 @@ setInterval(async () => {
 const WHISPR_MIN_AMOUNT = 1;
 
 /** SPL MINT ADRESA — zamijeni čim izdaš token */
-const WHISPR_MINT = '3GArCrYyJDxtc99RMZcDQkEaX7EpSks8cYF2smC4pump';
+const WHISPR_MINT = '3GArCrYyJDxtc99RMZcDQkEaX7EpSks8cYF2smC4';
 
 /** oslonimo se na postojeći db; ako ga nema, probaj iz firebase-a */
 const DB = (typeof db !== 'undefined') ? db : (firebase && firebase.database ? firebase.database() : null);
@@ -523,8 +523,8 @@ function setWalletLabel(pkStr) {
   const provider = getPhantom();
 
   // Eventi (ako postoje)
-  provider?.on?.('connect', (pk) => setWalletLabel(pk?.toString?.()));
-  provider?.on?.('accountChanged', (pk) => setWalletLabel(pk ? pk.toString() : '(disconnected)'));
+  provider?.on?.('connect', (pk) => setWalletLabel(pk?.toBase58?.?.() || pk?.toString?.()));
++ provider?.on?.('accountChanged', (pk) => setWalletLabel(pk ? (pk.toBase58?.() || pk.toString()) : '(disconnected)'));
 
   // Glavni click — reset pa connect
   btn.addEventListener('click', async (e) => {
@@ -630,7 +630,7 @@ async function connectPhantom(){
   }
   try{
     const resp = await window.solana.connect();
-    walletPubkey = resp.publicKey.toString();
+    walletPubkey = resp.publicKey.toBase58();
     if (walletLabel) walletLabel.textContent = walletPubkey.slice(0,4)+'…'+walletPubkey.slice(-4);
 
     if (requireOwnership){
@@ -760,16 +760,36 @@ db.ref('whispers')
 </script>
   <!-- verifyOwnership + listener -->
 <script>
-/* ---------- WHISPR: UI + verify helper (paste prije </body>) ---------- */
-const VERIFY_FUNCTION_URL = 'https://verifyownership-chmwowrmka-uc.a.run.app';
+/* ---------- WHISPR: UI + verify helper (REPLACE ovaj block) ---------- */
 
-/* helper: pozovi funkciju */
+/* ✅ KONSTANTE */
+const VERIFY_FUNCTION_URL = 'https://verifyownership-chmwowrmka-uc.a.run.app';
+const WHISPR_MINT = '3GArCrYyJDxtc99RMZcDQkEaX7EpSks8cYF2smC4'; // ČIST base58
+
+/* ✅ Base58 helperi (čiste pasteane vrijednosti) */
+function cleanBase58(s=""){ return String(s).trim().replace(/[^1-9A-HJ-NP-Za-km-z]/g,''); }
+function isBase58(s=""){ return /^[1-9A-HJ-NP-Za-km-z]+$/.test(s); }
+
+/* ✅ Uvijek izvuci Phantom key kao base58 (ne oslanjaj se na .toString()) */
+function getPkBase58() {
+  const pkObj = window.solana?.publicKey;
+  try { return pkObj?.toBase58?.() || pkObj?.toString?.() || ""; } catch { return ""; }
+}
+
+/* ✅ Poziv verify endpointa – sad šaljemo i MINT */
 async function callVerify(pubkey, txSig) {
+  const payload = { pubkey, txSig, mint: WHISPR_MINT };
+  // debug u konzolu da odmah vidiš duljine
+  console.log('[verify payload]', {
+    pubkey, pubkey_len: pubkey?.length || 0,
+    txSig_len: txSig?.length || 0,
+    mint_len: WHISPR_MINT.length
+  });
   try {
     const res = await fetch(VERIFY_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pubkey, txSig })
+      body: JSON.stringify(payload)
     });
     return await res.json();
   } catch (e) {
@@ -778,7 +798,7 @@ async function callVerify(pubkey, txSig) {
   }
 }
 
-/* UI helpers */
+/* UI helpers (ostavi ove, koristi tvoje elemente ako postoje) */
 function setWalletLabel(text){
   const label = document.getElementById('walletStatus') || document.getElementById('walletLabel');
   if (label) label.textContent = text;
@@ -788,7 +808,7 @@ function setWhisperGate(open){
   if (sendBtn) sendBtn.disabled = !open;
 }
 
-/* Ensure Manual verify button exists and attach handler */
+/* ✅ Manual verify gumb – sad čisti i validira base58 */
 function ensureManualVerifyButton(){
   if (document.getElementById('manualVerifyBtn')) return;
   const connectBtn = document.getElementById('connectPhantom') || null;
@@ -797,28 +817,31 @@ function ensureManualVerifyButton(){
   b.textContent = 'Manual verify txSig';
   b.style.cssText = 'margin-left:8px;padding:6px;';
   b.addEventListener('click', async () => {
-    const pk = window.solana?.publicKey?.toString?.();
-    if (!pk) return alert('Nema povezanog wallet-a');
-    const tx = prompt('Paste tx signature (txSig) here:');
-    if (!tx) return;
+    let pk = getPkBase58();
+    pk = cleanBase58(pk);
+    if (!pk || !isBase58(pk)) return alert('Nema valjanog wallet-a (pubkey). Poveži Phantom.');
+
+    const txRaw = prompt('Paste tx signature (txSig) here:');
+    if (!txRaw) return;
+    const txSig = cleanBase58(txRaw);
+    if (!isBase58(txSig)) return alert('Nevaljan txSig (mora biti base58).');
+
     b.disabled = true;
-    const r = await callVerify(pk, tx);
+    const r = await callVerify(pk, txSig);
     b.disabled = false;
     alert(JSON.stringify(r));
-    // if ok & has true, listener will pick up DB change and unlock sendBtn
+    // Ako backend upiše owners/<pk>=true, listener ispod će otključati gumb
   });
-  // insert after connect button if present, else append to body
   if (connectBtn && connectBtn.parentNode) connectBtn.parentNode.insertBefore(b, connectBtn.nextSibling);
   else document.body.appendChild(b);
 }
 
-/* start listening owners/<pubkey> and unlock UI when true */
+/* ✅ Slušaj owners/<pubkey> i otključaj UI kad server potvrdi */
 function startOwnersListener(pubkey){
-  if (!pubkey || !window.firebase || !window.firebase.database) {
+  if (!pubkey || !window.firebase?.database) {
     console.warn('startOwnersListener missing firebase or pubkey');
     return;
   }
-  // detach old
   try { if (window.__ownersListenerRef) window.__ownersListenerRef.off(); } catch(e){}
   const ref = firebase.database().ref('owners/' + pubkey);
   window.__ownersListenerRef = ref;
@@ -830,36 +853,31 @@ function startOwnersListener(pubkey){
   });
 }
 
-/* Try to update UI from current state (if wallet already connected) */
+/* ✅ Nakon connecta – koristi base58 */
 async function handleAfterConnect(){
   ensureManualVerifyButton();
-  const pk = window.solana?.publicKey?.toString?.();
-  if (pk) {
+  const pk = cleanBase58(getPkBase58());
+  if (pk && isBase58(pk)) {
     setWalletLabel(pk);
-    // start listener which will unlock if owners/<pk> exists
     startOwnersListener(pk);
-    // optional: if you want to auto-verify recent txs you could call callVerify here
   } else {
     setWalletLabel('(not connected)');
   }
 }
 
-/* Hook Phantom connect events and connect button fallback */
+/* ✅ Hookovi Phantom eventova + fallback na connect gumb */
 document.addEventListener('DOMContentLoaded', () => {
-  // create manual verify UI element
   ensureManualVerifyButton();
 
-  // if page already connected (Phantom kept session)
   if (window.solana?.isPhantom && window.solana?.isConnected) {
     handleAfterConnect();
   }
 
-  // listen for Phantom connect events
   try {
-    window.solana?.on?.('connect', pk => {
-      const pkstr = pk?.toString?.();
-      setWalletLabel(pkstr || '(connected)');
-      startOwnersListener(pkstr);
+    window.solana?.on?.('connect', pkObj => {
+      const pk = cleanBase58(pkObj?.toBase58?.() || pkObj?.toString?.() || "");
+      setWalletLabel(pk || '(connected)');
+      if (pk) startOwnersListener(pk);
     });
     window.solana?.on?.('disconnect', () => {
       setWalletLabel('(not connected)');
@@ -867,16 +885,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   } catch(e){ console.warn(e); }
 
-  // if user clicks your connect button and you don't have a handler, attach one
   const connectBtn = document.getElementById('connectPhantom');
   if (connectBtn) {
     connectBtn.addEventListener('click', async (ev) => {
       ev.preventDefault();
       try {
         if (!window.solana?.isPhantom) return alert('Phantom extension nije detektiran. Otvori Phantom extension i probaj ponovno.');
-        // try connect (will prompt Phantom)
         await window.solana.connect({ onlyIfTrusted: false });
-        // after connect event triggers, listener above will run
+        // connect event će triggat gore i pokrenuti handleAfterConnect → owners listener
       } catch (err) {
         console.error('connect error', err);
         alert('Greška pri povezivanju: ' + (err?.message || err));
@@ -886,11 +902,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 /* ---------- END WHISPR UI ---------- */
 </script>
-
 <!-- end verifyOwnership + listener -->
 </body>
 
 </html>
+
 
 
 
