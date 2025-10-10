@@ -760,8 +760,10 @@ db.ref('whispers')
 </script>
   <!-- verifyOwnership + listener -->
 <script>
+/* ---------- WHISPR: UI + verify helper (paste prije </body>) ---------- */
 const VERIFY_FUNCTION_URL = 'https://verifyownership-chmwowrmka-uc.a.run.app';
 
+/* helper: pozovi funkciju */
 async function callVerify(pubkey, txSig) {
   try {
     const res = await fetch(VERIFY_FUNCTION_URL, {
@@ -770,41 +772,126 @@ async function callVerify(pubkey, txSig) {
       body: JSON.stringify({ pubkey, txSig })
     });
     return await res.json();
-  } catch (e) { return { ok:false, err: String(e) }; }
-}
-
-function setWhisperGate(open) {
-  const sendBtn = document.getElementById('sendWhisper');
-  if (sendBtn) sendBtn.disabled = !open;
-  const lbl = document.getElementById('walletStatus') || document.getElementById('walletLabel');
-  if (lbl) lbl.textContent = open ? (window.solana?.publicKey?.toString?.() || 'connected') + ' — unlocked' : '(not connected)';
-}
-
-function startOwnersListener(pubkey){
-  if (!pubkey || !window.firebase || !window.firebase.database) return;
-  const ref = firebase.database().ref('owners/' + pubkey);
-  if (window.__ownersListenerRef) try{ window.__ownersListenerRef.off(); }catch(e){}
-  window.__ownersListenerRef = ref;
-  ref.on('value', snap => setWhisperGate(!!snap.val()));
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.solana?.isPhantom && window.solana?.isConnected) {
-    const pk = window.solana.publicKey?.toString?.();
-    if (pk) startOwnersListener(pk);
+  } catch (e) {
+    console.error('callVerify error', e);
+    return { ok:false, err: String(e) };
   }
+}
+
+/* UI helpers */
+function setWalletLabel(text){
+  const label = document.getElementById('walletStatus') || document.getElementById('walletLabel');
+  if (label) label.textContent = text;
+}
+function setWhisperGate(open){
+  const sendBtn = document.getElementById('sendWhisper') || document.querySelector('.send-whisper-btn');
+  if (sendBtn) sendBtn.disabled = !open;
+}
+
+/* Ensure Manual verify button exists and attach handler */
+function ensureManualVerifyButton(){
+  if (document.getElementById('manualVerifyBtn')) return;
+  const connectBtn = document.getElementById('connectPhantom') || null;
+  const b = document.createElement('button');
+  b.id = 'manualVerifyBtn';
+  b.textContent = 'Manual verify txSig';
+  b.style.cssText = 'margin-left:8px;padding:6px;';
+  b.addEventListener('click', async () => {
+    const pk = window.solana?.publicKey?.toString?.();
+    if (!pk) return alert('Nema povezanog wallet-a');
+    const tx = prompt('Paste tx signature (txSig) here:');
+    if (!tx) return;
+    b.disabled = true;
+    const r = await callVerify(pk, tx);
+    b.disabled = false;
+    alert(JSON.stringify(r));
+    // if ok & has true, listener will pick up DB change and unlock sendBtn
+  });
+  // insert after connect button if present, else append to body
+  if (connectBtn && connectBtn.parentNode) connectBtn.parentNode.insertBefore(b, connectBtn.nextSibling);
+  else document.body.appendChild(b);
+}
+
+/* start listening owners/<pubkey> and unlock UI when true */
+function startOwnersListener(pubkey){
+  if (!pubkey || !window.firebase || !window.firebase.database) {
+    console.warn('startOwnersListener missing firebase or pubkey');
+    return;
+  }
+  // detach old
+  try { if (window.__ownersListenerRef) window.__ownersListenerRef.off(); } catch(e){}
+  const ref = firebase.database().ref('owners/' + pubkey);
+  window.__ownersListenerRef = ref;
+  ref.on('value', snap => {
+    const val = snap.val();
+    console.log('[owners]', pubkey, val);
+    setWhisperGate(!!val);
+    if (val) setWalletLabel((pubkey || '(connected)') + ' — unlocked');
+  });
+}
+
+/* Try to update UI from current state (if wallet already connected) */
+async function handleAfterConnect(){
+  ensureManualVerifyButton();
+  const pk = window.solana?.publicKey?.toString?.();
+  if (pk) {
+    setWalletLabel(pk);
+    // start listener which will unlock if owners/<pk> exists
+    startOwnersListener(pk);
+    // optional: if you want to auto-verify recent txs you could call callVerify here
+  } else {
+    setWalletLabel('(not connected)');
+  }
+}
+
+/* Hook Phantom connect events and connect button fallback */
+document.addEventListener('DOMContentLoaded', () => {
+  // create manual verify UI element
+  ensureManualVerifyButton();
+
+  // if page already connected (Phantom kept session)
+  if (window.solana?.isPhantom && window.solana?.isConnected) {
+    handleAfterConnect();
+  }
+
+  // listen for Phantom connect events
   try {
-    window.solana?.on?.('connect', (pk) => {
+    window.solana?.on?.('connect', pk => {
       const pkstr = pk?.toString?.();
-      if (pkstr) startOwnersListener(pkstr);
+      setWalletLabel(pkstr || '(connected)');
+      startOwnersListener(pkstr);
     });
-  } catch(e){}
+    window.solana?.on?.('disconnect', () => {
+      setWalletLabel('(not connected)');
+      setWhisperGate(false);
+    });
+  } catch(e){ console.warn(e); }
+
+  // if user clicks your connect button and you don't have a handler, attach one
+  const connectBtn = document.getElementById('connectPhantom');
+  if (connectBtn) {
+    connectBtn.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      try {
+        if (!window.solana?.isPhantom) return alert('Phantom extension nije detektiran. Otvori Phantom extension i probaj ponovno.');
+        // try connect (will prompt Phantom)
+        await window.solana.connect({ onlyIfTrusted: false });
+        // after connect event triggers, listener above will run
+      } catch (err) {
+        console.error('connect error', err);
+        alert('Greška pri povezivanju: ' + (err?.message || err));
+      }
+    });
+  }
 });
+/* ---------- END WHISPR UI ---------- */
 </script>
+
 <!-- end verifyOwnership + listener -->
 </body>
 
 </html>
+
 
 
 
