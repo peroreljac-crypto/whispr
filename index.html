@@ -438,499 +438,60 @@ setInterval(async () => {
 }, 20000); // pokreće se svakih 20 sekundi
 /* ====== SOLANA GATE: FREE → HOLDERS-ONLY (koristi tvoje varijable) ====== */
 
-/** KOLIKO TREBA DRŽATI */
-const WHISPR_MIN_AMOUNT = 1;
+// 6) Eventi (klik + Enter)
+    button.addEventListener('click', sendWhisper);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
+    });
+  
+    // 7) Live feed (zadnjih 20)
+    db.ref('whispers').orderByChild('time').limitToLast(20).on('value', snap => {
+      const data = snap.val();
+      console.log('[whispr] feed update:', !!data);
+      if (!data) return;
+      const list = Object.values(data).sort((a,b)=>a.time-b.time);
+      list.forEach(item => floatWhisper(item.text, false));
+    });
 
-/** SPL MINT ADRESA — zamijeni čim izdaš token */
-const WHISPR_MINT = '3GArCrYyJDxtc99RMZcDQkEaX7EpSks8cYF2smC4';
-
-/** oslonimo se na postojeći db; ako ga nema, probaj iz firebase-a */
-const DB = (typeof db !== 'undefined') ? db : (firebase && firebase.database ? firebase.database() : null);
-if (!DB) { console.error('[whispr] DB not ready'); }
-
-/** globalno stanje */
-let requireOwnership = false; // dok je false → FREE
-let walletPubkey = null;
-let lastHolderOk = false;
-
-/** elementi (koristimo tvoje postojeće) */
-const connectBtn  = document.getElementById('connectPhantom');
-const walletLabel = document.getElementById('walletStatus');
-const adminBar    = document.getElementById('adminBar');
-const toggleMode  = document.getElementById('toggleMode');
-const modeHint    = document.getElementById('modeHint');
-
-/** tvoje postojeće varijable: */
-const inputEl  = (typeof input  !== 'undefined')  ? input  : document.getElementById('whisperInput');
-const statusEl = (typeof status !== 'undefined') ? status : document.getElementById('whisperStatus');
-
-/** prikaži admin bar samo s ?admin=1 */
-const isAdmin = location.search.includes('admin=1');
-if (isAdmin && adminBar) adminBar.style.display = 'flex';
-
-/** CONFIG toggle u Firebaseu: /config/requireOwnership (true/false) */
-const cfgRef = DB.ref('config/requireOwnership');
-
-/** ako ne postoji, postavi default (FREE) */
-cfgRef.once('value').then(s => { if (s.val() === null) cfgRef.set(false); });
-
-/** slušaj promjene moda globalno */
-cfgRef.on('value', snap => {
-  requireOwnership = !!snap.val();
-  updateModeUI();
-  updateGateUI();
-});
-   /* 1) Forsiraj HTTPS (osim localhosta) */
-(() => {
-  const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
-  if (!isLocal && location.protocol !== 'https:') {
-    location.replace('https://' + location.host + location.pathname + location.search + location.hash);
-  }
+    // 8) mini check upis
+    db.ref('connection-test').set({ok:true, t:Date.now()})
+      .then(()=>console.log('[whispr] test write OK'))
+      .catch(err=>console.error('[whispr] test write FAIL', err));
+  });
 })();
+  const liveLayer = document.querySelector('.live-whispers');
 
-/* 2) Provjeri da gumb nije submit (da ne reloada stranicu) */
-const _btnConnect = document.getElementById('connectPhantom');
-if (_btnConnect) _btnConnect.setAttribute('type', 'button');
-
-/* 3) Ako si imao neki STARI handler za connect — makni ga (klon trik) */
-if (_btnConnect) {
-  const clone = _btnConnect.cloneNode(true);
-  _btnConnect.replaceWith(clone);
+function floatLiveWhisper(text, strong = false) {
+  if (!liveLayer || !text) return;
+  const span = document.createElement('span');
+  span.textContent = text;
+  span.style.position = 'absolute';
+  span.style.top = (10 + Math.random() * 80) + '%';
+  span.style.left = (5 + Math.random() * 90) + '%';
+  span.style.color = strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
+  span.style.fontSize = (18 + Math.floor(Math.random() * 6)) + 'px';
+  span.style.textShadow = strong ? '0 0 10px rgba(255,255,255,0.28)' : '0 0 6px rgba(255,255,255,0.12)';
+  span.style.animation = 'whisperMove 12s linear 1';
+  span.style.opacity = '0';
+  liveLayer.appendChild(span);
+  setTimeout(() => span.remove(), 12000);
 }
 
-/* 4) Uvijek izaberi baš Phantom providera (ako ih ima više) */
-function getPhantom() {
-  const w = window;
-  if (w.solana?.isPhantom) return w.solana;
-  if (Array.isArray(w.solana?.providers)) {
-    const p = w.solana.providers.find(p => p.isPhantom);
-    if (p) return p;
-  }
-  return null;
-}
-
-/* 5) UI helper */
-function setWalletLabel(pkStr) {
-  const label = document.getElementById('walletStatus');
-  if (label) label.textContent = pkStr || '(not connected)';
-}
-
-/* 6) Eventi + klik handler */
-(function initPhantomConnect() {
-  const btn = document.getElementById('connectPhantom');
-  if (!btn) return;
-
-  const provider = getPhantom();
-
-  // Eventi (ako postoje)
-  provider?.on?.('connect', (pk) => setWalletLabel(pk?.toBase58?.?.() || pk?.toString?.()));
-+ provider?.on?.('accountChanged', (pk) => setWalletLabel(pk ? (pk.toBase58?.() || pk.toString()) : '(disconnected)'));
-
-  // Glavni click — reset pa connect
-  btn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const prov = getPhantom();
-    if (!prov) {
-      alert('Phantom extension nije detektiran.\n- Isključi adblock/shields\n- Ne koristi iFrame/preview\n- Otvori https://www.whisprcoin.com');
-      return;
-    }
-    try {
-      try { await prov.disconnect(); } catch(_) {}   // očisti pending stanje
-      const res = await prov.connect({ onlyIfTrusted: false });
-      const pk = prov.publicKey ?? res?.publicKey;
-      setWalletLabel(pk?.toString?.() || '(no key)');
-      renderWalletUI(pk?.toString?.());   
-      console.log('[PHANTOM] connected:', pk?.toString?.());
-    } catch (err) {
-      console.error('[PHANTOM] connect error:', err);
-      alert('Phantom connect error: ' + (err?.message || err));
-    }
+// 🔁 sluša samo nove whispere iz baze
+db.ref('whispers')
+  .orderByChild('time')
+  .limitToLast(20)
+  .on('child_added', snap => {
+    const w = snap.val();
+    if (!w || !w.text) return;
+    floatLiveWhisper(w.text, false);
   });
-
-  // Ako je već spojen nakon refresh-a
-  if (provider?.isConnected && provider?.publicKey) {
-    setWalletLabel(provider.publicKey.toString());
-  } else {
-    setWalletLabel('(not connected)');
-  }
-})();
-    
-/** 🔹 KRAJ PHANTOM CONNECTA 🔹 */
-
-    /** 🔹 LJEPŠI PHANTOM UI 🔹 */
-function shorten(pk){ 
-  return pk ? pk.slice(0,4) + '…' + pk.slice(-4) : ''; 
-}
-
-async function copyToClipboard(text){ 
-  try { 
-    await navigator.clipboard.writeText(text); 
-    alert('Address copied'); 
-  } catch(e){ console.error(e); } 
-}
-
-function renderWalletUI(pkStr){
-  const btn   = document.getElementById('connectPhantom');
-  const label = document.getElementById('walletStatus');
-  if (!btn) return;
-
-  if (pkStr){
-    // prikaz nakon connecta
-    btn.textContent = 'Connected';
-    if (label){
-      label.innerHTML = `
-        <span id="addrShort" style="font-family:monospace">${shorten(pkStr)}</span>
-        <button id="copyPk" type="button" style="margin-left:8px">Copy</button>
-        <button id="disconnectPk" type="button" style="margin-left:4px">Disconnect</button>`;
-    }
-
-    // gumbi
-    document.getElementById('copyPk')?.addEventListener('click', ()=>copyToClipboard(pkStr));
-    document.getElementById('disconnectPk')?.addEventListener('click', async ()=>{
-      try { await window.solana?.disconnect?.(); } catch(e){}
-      renderWalletUI(null);
-      // opcionalno: zaključaj whisper input
-      if (typeof setWhisperGate === 'function') setWhisperGate(false);
-    });
-  } else {
-    // reset UI kad se odspoji
-    btn.textContent = 'Connect Phantom';
-    if (label) label.textContent = '(not connected)';
-  }
-}
-
-/** UI helpers */
-function updateModeUI(){
-  if (!toggleMode || !modeHint) return;
-  toggleMode.textContent = requireOwnership ? 'holders-only' : 'free';
-  modeHint.textContent   = requireOwnership ? '(holders-only is ON)' : '(holders-only is OFF)';
-}
-function updateGateUI(){
-  if (!inputEl || !whisperSend) return;
-  if (!requireOwnership){
-    inputEl.disabled = false; whisperSend.disabled = false;
-    if (inputEl.placeholder.toLowerCase().includes('connect wallet')){
-      inputEl.placeholder = 'send a whispr.';
-    }
-  } else {
-    if (lastHolderOk){
-      inputEl.disabled = false; whisperSend.disabled = false;
-    } else {
-      inputEl.disabled = true;  whisperSend.disabled = true;
-      inputEl.placeholder = 'connect wallet to whisper.';
-    }
-  }
-}
-
-/** Phantom connect */
-async function connectPhantom(){
-  if (!window.solana || !window.solana.isPhantom){
-    alert('Install Phantom wallet to continue.');
-    return null;
-  }
-  try{
-    const resp = await window.solana.connect();
-    walletPubkey = resp.publicKey.toBase58();
-    if (walletLabel) walletLabel.textContent = walletPubkey.slice(0,4)+'…'+walletPubkey.slice(-4);
-
-    if (requireOwnership){
-      lastHolderOk = await hasWhispr(walletPubkey, WHISPR_MINT, WHISPR_MIN_AMOUNT);
-      updateGateUI();
-    }
-    return walletPubkey;
-  }catch(e){
-    console.warn('phantom connect cancelled', e?.message);
-    return null;
-  }
-}
-
-/** SPL balance provjera (RPC) */
-async function hasWhispr(owner, mintAddress, minAmount){
-  try{
-    const rpc = 'https://api.mainnet-beta.solana.com'; // devnet: 'https://api.devnet.solana.com'
-    const body = {
-      jsonrpc:"2.0", id:1, method:"getTokenAccountsByOwner",
-      params:[ owner, { mint: mintAddress }, { encoding:"jsonParsed" } ]
-    };
-    const res = await fetch(rpc, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    }).then(r=>r.json());
-    const accounts = res?.result?.value || [];
-    let balance = 0;
-    for (const a of accounts){
-      const ui = a?.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
-      if (typeof ui === 'number') balance += ui;
-    }
-    return balance >= minAmount;
-  }catch(e){
-    console.error('balance check error', e);
-    return false;
-  }
-}
-
-/** admin toggle — piše u Firebase (simple pass, promijeni kad želiš) */
-if (isAdmin && toggleMode){
-  toggleMode.addEventListener('click', async () => {
-    const pass = prompt('admin pass (privremeno):');
-    if (pass !== 'whispr-admin') return alert('nope.');
-    await cfgRef.set(!requireOwnership);
-  });
-}
-
-/** connect phantom gumb */
-if (connectBtn){
-  connectBtn.addEventListener('click', async () => { await connectPhantom(); });
-}
-
-/** ⛔ Zamjena tvoje sendWhisper logike: ubacujemo gate na VRH pa zovemo tvoju istu funkciju */
-const __originalSendWhisper = sendWhisper; // spremi tvoju postojeću
-
-window.sendWhisper = async function(){
-  // HOLDERS-ONLY gate
-  if (requireOwnership){
-    if (!walletPubkey){
-      await connectPhantom();
-      if (!walletPubkey) return; // user odustao
-    }
-    lastHolderOk = await hasWhispr(walletPubkey, WHISPR_MINT, WHISPR_MIN_AMOUNT);
-    if (!lastHolderOk){
-      if (statusEl){ statusEl.textContent = 'need 1 $WHISPR to whisper'; setTimeout(()=>statusEl.textContent='', 2000); }
-      updateGateUI();
-      return;
-    }
-  }
-  // sve ok → pozovi tvoju originalnu funkciju (ne diramo floatWhisper, db, itd.)
-  return __originalSendWhisper();
-};
-
-// inicijalni UI
-updateModeUI();
-updateGateUI();
-
-/* ====== /SOLANA GATE ====== */
-   <script>
-/* ==== PHANTOM CONNECT — JEDINI IZVOR ISTINE ==== */
-function getPhantom() {
-  const w = window;
-  if (w.solana?.isPhantom) return w.solana;
-  if (Array.isArray(w.solana?.providers)) {
-    const p = w.solana.providers.find(p => p.isPhantom);
-    if (p) return p;
-  }
-  return null;
-}
-
-window.walletPubkey = window.walletPubkey || null;
-
-function setWalletLabel(pkStr) {
-  const label = document.getElementById('walletStatus');
-  if (label) label.textContent = pkStr || '(not connected)';
-}
-
-function afterConnect(provider){
-  try {
-    const pk = provider?.publicKey?.toBase58?.() || provider?.publicKey?.toString?.() || '';
-    window.walletPubkey = pk || null;
-    setWalletLabel(pk || '(connected)');
-    renderWalletUI(pk);
-    if (typeof startOwnersListener === 'function' && pk) startOwnersListener(pk);
-    if (typeof updateGateUI === 'function') updateGateUI();
-  } catch (e) {
-    console.warn('afterConnect error', e);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('connectPhantom');
-  if (!btn) return;
-
-  btn.setAttribute('type', 'button');
-  const provider = getPhantom();
-
-  provider?.on?.('accountChanged', (pkObj) => {
-    const pk = pkObj ? (pkObj.toBase58?.() || pkObj.toString?.() || '') : '';
-    window.walletPubkey = pk || null;
-    setWalletLabel(pk || '(disconnected)');
-    renderWalletUI(pk || null);
-    if (typeof setWhisperGate === 'function') setWhisperGate(!!pk);
-    if (typeof updateGateUI === 'function') updateGateUI();
-    if (pk && typeof startOwnersListener === 'function') startOwnersListener(pk);
-  });
-
-  if (provider?.isConnected && provider?.publicKey) {
-    afterConnect(provider);
-  } else {
-    setWalletLabel('(not connected)');
-  }
-
-  btn.onclick = async (e) => {
-    e.preventDefault();
-    const prov = getPhantom();
-    if (!prov) {
-      alert('Phantom nije detektiran. Isključi adblock/shields i otvori site izvan iFrame-a (https://whisprcoin.com).');
-      return;
-    }
-    try {
-      try { await prov.disconnect(); } catch(_) {}
-      await prov.connect({ onlyIfTrusted: false });
-      afterConnect(prov);
-    } catch (err) {
-      console.error('Phantom connect error:', err);
-      alert('Greška pri povezivanju: ' + (err?.message || err));
-    }
-  };
-});
-/* ==== /PHANTOM CONNECT ==== */
 </script>
-  <!-- verifyOwnership + listener -->
-<script>
-/* ---------- WHISPR: UI + verify helper (REPLACE ovaj block) ---------- */
-
-/* ✅ KONSTANTE */
-const VERIFY_FUNCTION_URL = 'https://verifyownership-chmwowrmka-uc.a.run.app';
-const WHISPR_MINT = '3GArCrYyJDxtc99RMZcDQkEaX7EpSks8cYF2smC4'; // ČIST base58
-
-/* ✅ Base58 helperi (čiste pasteane vrijednosti) */
-function cleanBase58(s=""){ return String(s).trim().replace(/[^1-9A-HJ-NP-Za-km-z]/g,''); }
-function isBase58(s=""){ return /^[1-9A-HJ-NP-Za-km-z]+$/.test(s); }
-
-/* ✅ Uvijek izvuci Phantom key kao base58 (ne oslanjaj se na .toString()) */
-function getPkBase58() {
-  const pkObj = window.solana?.publicKey;
-  try { return pkObj?.toBase58?.() || pkObj?.toString?.() || ""; } catch { return ""; }
-}
-
-/* ✅ Poziv verify endpointa – sad šaljemo i MINT */
-async function callVerify(pubkey, txSig) {
-  const payload = { pubkey, txSig, mint: WHISPR_MINT };
-  // debug u konzolu da odmah vidiš duljine
-  console.log('[verify payload]', {
-    pubkey, pubkey_len: pubkey?.length || 0,
-    txSig_len: txSig?.length || 0,
-    mint_len: WHISPR_MINT.length
-  });
-  try {
-    const res = await fetch(VERIFY_FUNCTION_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    return await res.json();
-  } catch (e) {
-    console.error('callVerify error', e);
-    return { ok:false, err: String(e) };
-  }
-}
-
-/* UI helpers (ostavi ove, koristi tvoje elemente ako postoje) */
-function setWalletLabel(text){
-  const label = document.getElementById('walletStatus') || document.getElementById('walletLabel');
-  if (label) label.textContent = text;
-}
-function setWhisperGate(open){
-  const sendBtn = document.getElementById('sendWhisper') || document.querySelector('.send-whisper-btn');
-  if (sendBtn) sendBtn.disabled = !open;
-}
-
-/* ✅ Manual verify gumb – sad čisti i validira base58 */
-function ensureManualVerifyButton(){
-  if (document.getElementById('manualVerifyBtn')) return;
-  const connectBtn = document.getElementById('connectPhantom') || null;
-  const b = document.createElement('button');
-  b.id = 'manualVerifyBtn';
-  b.textContent = 'Manual verify txSig';
-  b.style.cssText = 'margin-left:8px;padding:6px;';
-  b.addEventListener('click', async () => {
-    let pk = getPkBase58();
-    pk = cleanBase58(pk);
-    if (!pk || !isBase58(pk)) return alert('Nema valjanog wallet-a (pubkey). Poveži Phantom.');
-
-    const txRaw = prompt('Paste tx signature (txSig) here:');
-    if (!txRaw) return;
-    const txSig = cleanBase58(txRaw);
-    if (!isBase58(txSig)) return alert('Nevaljan txSig (mora biti base58).');
-
-    b.disabled = true;
-    const r = await callVerify(pk, txSig);
-    b.disabled = false;
-    alert(JSON.stringify(r));
-    // Ako backend upiše owners/<pk>=true, listener ispod će otključati gumb
-  });
-  if (connectBtn && connectBtn.parentNode) connectBtn.parentNode.insertBefore(b, connectBtn.nextSibling);
-  else document.body.appendChild(b);
-}
-
-/* ✅ Slušaj owners/<pubkey> i otključaj UI kad server potvrdi */
-function startOwnersListener(pubkey){
-  if (!pubkey || !window.firebase?.database) {
-    console.warn('startOwnersListener missing firebase or pubkey');
-    return;
-  }
-  try { if (window.__ownersListenerRef) window.__ownersListenerRef.off(); } catch(e){}
-  const ref = firebase.database().ref('owners/' + pubkey);
-  window.__ownersListenerRef = ref;
-  ref.on('value', snap => {
-    const val = snap.val();
-    console.log('[owners]', pubkey, val);
-    setWhisperGate(!!val);
-    if (val) setWalletLabel((pubkey || '(connected)') + ' — unlocked');
-  });
-}
-
-/* ✅ Nakon connecta – koristi base58 */
-async function handleAfterConnect(){
-  ensureManualVerifyButton();
-  const pk = cleanBase58(getPkBase58());
-  if (pk && isBase58(pk)) {
-    setWalletLabel(pk);
-    startOwnersListener(pk);
-  } else {
-    setWalletLabel('(not connected)');
-  }
-}
-
-/* ✅ Hookovi Phantom eventova + fallback na connect gumb */
-document.addEventListener('DOMContentLoaded', () => {
-  ensureManualVerifyButton();
-
-  if (window.solana?.isPhantom && window.solana?.isConnected) {
-    handleAfterConnect();
-  }
-
-  try {
-    window.solana?.on?.('connect', pkObj => {
-      const pk = cleanBase58(pkObj?.toBase58?.() || pkObj?.toString?.() || "");
-      setWalletLabel(pk || '(connected)');
-      if (pk) startOwnersListener(pk);
-    });
-    window.solana?.on?.('disconnect', () => {
-      setWalletLabel('(not connected)');
-      setWhisperGate(false);
-    });
-  } catch(e){ console.warn(e); }
-
-  const connectBtn = document.getElementById('connectPhantom');
-  if (connectBtn) {
-    connectBtn.addEventListener('click', async (ev) => {
-      ev.preventDefault();
-      try {
-        if (!window.solana?.isPhantom) return alert('Phantom extension nije detektiran. Otvori Phantom extension i probaj ponovno.');
-        await window.solana.connect({ onlyIfTrusted: false });
-        // connect event će triggat gore i pokrenuti handleAfterConnect → owners listener
-      } catch (err) {
-        console.error('connect error', err);
-        alert('Greška pri povezivanju: ' + (err?.message || err));
-      }
-    });
-  }
-});
-/* ---------- END WHISPR UI ---------- */
-</script>
-<!-- end verifyOwnership + listener -->
 </body>
 
 </html>
+
+
 
 
 
