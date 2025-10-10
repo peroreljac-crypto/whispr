@@ -758,9 +758,54 @@ db.ref('whispers')
     floatLiveWhisper(w.text, false);
   });
 </script>
+  <!-- verifyOwnership + listener -->
+<script>
+const VERIFY_FUNCTION_URL = 'https://verifyownership-chmwowrmka-uc.a.run.app';
+
+async function callVerify(pubkey, txSig) {
+  try {
+    const res = await fetch(VERIFY_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pubkey, txSig })
+    });
+    return await res.json();
+  } catch (e) { return { ok:false, err: String(e) }; }
+}
+
+function setWhisperGate(open) {
+  const sendBtn = document.getElementById('sendWhisper');
+  if (sendBtn) sendBtn.disabled = !open;
+  const lbl = document.getElementById('walletStatus') || document.getElementById('walletLabel');
+  if (lbl) lbl.textContent = open ? (window.solana?.publicKey?.toString?.() || 'connected') + ' — unlocked' : '(not connected)';
+}
+
+function startOwnersListener(pubkey){
+  if (!pubkey || !window.firebase || !window.firebase.database) return;
+  const ref = firebase.database().ref('owners/' + pubkey);
+  if (window.__ownersListenerRef) try{ window.__ownersListenerRef.off(); }catch(e){}
+  window.__ownersListenerRef = ref;
+  ref.on('value', snap => setWhisperGate(!!snap.val()));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.solana?.isPhantom && window.solana?.isConnected) {
+    const pk = window.solana.publicKey?.toString?.();
+    if (pk) startOwnersListener(pk);
+  }
+  try {
+    window.solana?.on?.('connect', (pk) => {
+      const pkstr = pk?.toString?.();
+      if (pkstr) startOwnersListener(pkstr);
+    });
+  } catch(e){}
+});
+</script>
+<!-- end verifyOwnership + listener -->
 </body>
 
 </html>
+
 
 
 
