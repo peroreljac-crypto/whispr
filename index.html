@@ -394,7 +394,6 @@
 
     // === Cloud Functions (us-central1) ===
     const fns = firebase.app().functions('us-central1');
-    const verifyColorPass = fns.httpsCallable('verifyColorPass');
     const getPassStatus   = fns.httpsCallable('getPassStatus');
     const getBlockhash = fns.httpsCallable('getBlockhash');
     const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
@@ -419,9 +418,8 @@
     }
 
     // ✅ FIX: Reliably check for wallet connection on page load.
-    // We listen for the wallet's 'load' event to ensure the provider is ready.
-    // This will automatically fetch the pass status if the user has previously
-    // connected their wallet to your site.
+    // We listen for the 'solana#initialized' event which Phantom dispatches
+    // when it's ready. This handles the race condition.
     const handleWalletReady = () => {
         const provider = window.solana;
         if (provider?.isPhantom && provider.publicKey) {
@@ -432,13 +430,10 @@
         }
     };
 
-    // The Phantom wallet provider is injected asynchronously.
-    // We need to listen for the 'load' event on the window to be sure
-    // that `window.solana` is available.
     if (window.solana) {
       handleWalletReady();
     } else {
-      window.addEventListener('load', handleWalletReady);
+      window.addEventListener('solana#initialized', handleWalletReady, { once: true });
     }
 
     // Call this WHEN PHANTOM IS CONNECTED
@@ -471,7 +466,7 @@
         if (!provider.publicKey) {
           const resp = await provider.connect();
           userPubkey = resp.publicKey.toString();
-          // After connecting, check their pass status
+          // After connecting for the first time, check their pass status
           await afterWalletConnected(userPubkey);
         } else {
           userPubkey = provider.publicKey.toString();
@@ -531,7 +526,7 @@
         if (data?.ok) {
           passActive = true;
           passUntil  = data.active_until || 0;
-          renderColorStatus();
+          renderColorStatus(); // This will now show the time remaining
           console.log('[whispr] PASS activated until:', new Date(passUntil).toLocaleString());
         } else {
           colorStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
@@ -548,7 +543,7 @@
     // Bind handler to button
     colorBtn?.addEventListener('click', onColorBtnClick);
 
-    // 3) DOM elements
+    // 3) DOM elementi
     const layer  = document.querySelector('.whispers');
     const input  = document.getElementById('whisperInput');
     const button = document.getElementById('whisperSend');
@@ -654,6 +649,8 @@
 </body>
 
 </html>
+
+
 
 
 
