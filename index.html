@@ -390,133 +390,129 @@
     const db = firebase.database();
 
     // === Cloud Functions (us-central1) ===
-const fns = firebase.app().functions('us-central1');
-const verifyColorPass = fns.httpsCallable('verifyColorPass');
-const getPassStatus   = fns.httpsCallable('getPassStatus');
-const getBlockhash = fns.httpsCallable('getBlockhash');
+    const fns = firebase.app().functions('us-central1');
+    const getPassStatus = fns.httpsCallable('getPassStatus');
+    const getBlockhash = fns.httpsCallable('getBlockhash');
+    // ✅ NEW: Point to the new backend function
+    const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
 
-// === UI elementi za colored pass (tvoj gumb i status) ===
-const colorBtn    = document.getElementById('colorWhisperBtn');
-const colorStatus = document.getElementById('colorStatus');
+    // === UI elementi za colored pass (tvoj gumb i status) ===
+    const colorBtn    = document.getElementById('colorWhisperBtn');
+    const colorStatus = document.getElementById('colorStatus');
 
-// globalno stanje
-let userPubkey = null;   // postavit će se kad spojiš Phantom
-let passActive = false;
-let passUntil  = 0;
+    // globalno stanje
+    let userPubkey = null;   // postavit će se kad spojiš Phantom
+    let passActive = false;
+    let passUntil  = 0;
 
-function renderColorStatus() {
-  if (!colorStatus) return;
-  if (passActive) {
-    const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
-    colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
-  } else {
-    colorStatus.textContent = 'no color active';
-  }
-}
-
-// Pozovi ovo KAD SPOJIŠ PHANTOM (vidi korak niže)
-async function afterWalletConnected(pubkey){
-  userPubkey = pubkey;
-  try {
-    const { data } = await getPassStatus({ userPubkey });
-    passActive = !!data.active;
-    passUntil  = data.active_until || 0;
-    renderColorStatus();
-    console.log('[whispr] getPassStatus:', data);
-  } catch (e) {
-    console.error('[whispr] getPassStatus error:', e);
-  }
-}
-
-// Klik na tvoj gumb "✨ Get colored whispers — 0.01 SOL / 24 h"
-async function onColorBtnClick() {
-  const provider = window.solana;
-  const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // isti kao u backendu
-  const PRICE_SOL = 0.01;
-
-  if (!provider?.isPhantom) { alert('Phantom wallet nije instaliran.'); return; }
-  if (!window.solanaWeb3)   { alert('Solana web3 nije učitan (hard refresh).'); return; }
-
-  try {
-    // ✅ UI IMPROVEMENT: Disable button to prevent multiple clicks
-    colorBtn.disabled = true;
-
-    // connect ako treba
-    if (!provider.publicKey) {
-      const resp = await provider.connect();
-      userPubkey = resp.publicKey.toString();
-    } else {
-      userPubkey = provider.publicKey.toString();
+    function renderColorStatus() {
+      if (!colorStatus) return;
+      if (passActive) {
+        const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
+        colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
+      } else {
+        colorStatus.textContent = 'no color active';
+      }
     }
 
-    colorStatus.textContent = 'getting blockhash…';
-    // ⬇️ blockhash s BACKENDA (callable)
-    const bh = await getBlockhash();
-    const blockhash = bh?.data?.blockhash;
-    if (!blockhash) { throw new Error('No blockhash from backend'); }
-
-    colorStatus.textContent = 'opening Phantom…';
-
-    // složi transfer (bez browser Connection-a)
-    const fromPubkey = provider.publicKey;
-    const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
-    const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
-
-    if (window.buffer?.Buffer) {
-      window.Buffer = window.buffer.Buffer;
-      globalThis.Buffer = window.buffer.Buffer;
+    // Pozovi ovo KAD SPOJIŠ PHANTOM (vidi korak niže)
+    async function afterWalletConnected(pubkey){
+      userPubkey = pubkey;
+      try {
+        const { data } = await getPassStatus({ userPubkey });
+        passActive = !!data.active;
+        passUntil  = data.active_until || 0;
+        renderColorStatus();
+        console.log('[whispr] getPassStatus:', data);
+      } catch (e) {
+        console.error('[whispr] getPassStatus error:', e);
+      }
     }
-    if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
-      Buffer.from = window.buffer.Buffer.from.bind(window.buffer.Buffer);
+
+    // Klik na tvoj gumb "✨ Get colored whispers — 0.01 SOL / 24 h"
+    async function onColorBtnClick() {
+      const provider = window.solana;
+      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // isti kao u backendu
+      const PRICE_SOL = 0.01;
+
+      if (!provider?.isPhantom) { alert('Phantom wallet nije instaliran.'); return; }
+      if (!window.solanaWeb3)   { alert('Solana web3 nije učitan (hard refresh).'); return; }
+
+      try {
+        colorBtn.disabled = true;
+
+        // connect ako treba
+        if (!provider.publicKey) {
+          const resp = await provider.connect();
+          userPubkey = resp.publicKey.toString();
+        } else {
+          userPubkey = provider.publicKey.toString();
+        }
+
+        colorStatus.textContent = 'getting blockhash…';
+        // ⬇️ blockhash s BACKENDA (callable)
+        const bh = await getBlockhash();
+        const blockhash = bh?.data?.blockhash;
+        const lastValidBlockHeight = bh?.data?.lastValidBlockHeight;
+        if (!blockhash || !lastValidBlockHeight) {
+          throw new Error('No blockhash from backend');
+        }
+
+        colorStatus.textContent = 'opening Phantom…';
+
+        // složi transfer
+        const fromPubkey = provider.publicKey;
+        const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
+        const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
+
+        if (window.buffer?.Buffer) {
+          window.Buffer = window.buffer.Buffer;
+          globalThis.Buffer = window.buffer.Buffer;
+        }
+        if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
+          Buffer.from = window.buffer.Buffer.from.bind(window.buffer.Buffer);
+        }
+        
+        const tx = new window.solanaWeb3.Transaction({
+          feePayer: fromPubkey,
+          recentBlockhash: blockhash,
+        }).add(
+          window.solanaWeb3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
+        );
+
+        // potpis + slanje kroz Phantom
+        colorStatus.textContent = 'awaiting approval in Phantom…';
+        const { signature } = await provider.signAndSendTransaction(tx);
+        
+        // ✅ FIX: Send signature to backend for confirmation and verification
+        colorStatus.textContent = 'confirming and verifying…';
+        const { data } = await confirmAndVerifyPayment({
+          userPubkey,
+          signature,
+          blockhash,
+          lastValidBlockHeight
+        });
+
+        if (data?.ok) {
+          passActive = true;
+          passUntil  = data.active_until || 0;
+          renderColorStatus();
+          colorStatus.textContent = '✅ color ACTIVE';
+          console.log('[whispr] PASS aktiviran do:', new Date(passUntil).toLocaleString());
+        } else {
+          colorStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
+          console.log('[whispr] payment not found:', data?.reason);
+        }
+        colorBtn.disabled = false;
+      } catch (e) {
+        console.error('Payment error:', e);
+        colorStatus.textContent = '❌ cancelled or failed';
+        colorBtn.disabled = false;
+      }
     }
-    
-    const tx = new window.solanaWeb3.Transaction({
-      feePayer: fromPubkey,
-      recentBlockhash: blockhash,
-    }).add(
-      window.solanaWeb3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
-    );
 
-    // potpis + slanje kroz Phantom
-    colorStatus.textContent = 'awaiting approval in Phantom…';
-    const { signature } = await provider.signAndSendTransaction(tx);
-    
-    // ✅ FIX: Wait for the transaction to be confirmed by the network.
-    // This is the most important change. We create a temporary connection
-    // object just to confirm the transaction on the client side before
-    // asking our backend to verify it.
-    colorStatus.textContent = 'confirming transaction…';
-    const conn = new window.solanaWeb3.Connection(
-      'https://api.mainnet-beta.solana.com', // A public RPC is fine for this one-off check
-      'confirmed'
-    );
-    await conn.confirmTransaction({ signature, blockhash, lastValidBlockHeight: bh.data.lastValidBlockHeight });
-
-    colorStatus.textContent = 'verifying on backend…';
-    // Now that the transaction is confirmed, we can safely ask our backend to verify.
-    const { data } = await verifyColorPass({ userPubkey });
-    if (data?.ok) {
-      passActive = true;
-      passUntil  = data.active_until || 0;
-      renderColorStatus();
-      colorStatus.textContent = '✅ color ACTIVE';
-      console.log('[whispr] PASS aktiviran do:', new Date(passUntil).toLocaleString());
-    } else {
-      colorStatus.textContent = '❌ payment not found';
-      console.log('[whispr] payment not found:', data?.reason);
-    }
-    // ✅ UI IMPROVEMENT: Re-enable button on success
-    colorBtn.disabled = false;
-  } catch (e) {
-    console.error('Payment error:', e);
-    colorStatus.textContent = '❌ cancelled or failed';
-    // ✅ UI IMPROVEMENT: Re-enable button on error
-    colorBtn.disabled = false;
-  }
-}
-
-// Uveži handler na gumb
-colorBtn?.addEventListener('click', onColorBtnClick);
+    // Uveži handler na gumb
+    colorBtn?.addEventListener('click', onColorBtnClick);
 
     // 3) DOM elementi
     const layer  = document.querySelector('.whispers');
@@ -569,29 +565,29 @@ colorBtn?.addEventListener('click', onColorBtnClick);
       input.value = '';
     }
     // 🧹 AUTO-CLEAN svakih 20 sekundi
-setInterval(async () => {
-  try {
-    const snap = await db.ref('whispers').once('value');
-    const data = snap.val();
-    if (!data) return;
+    setInterval(async () => {
+      try {
+        const snap = await db.ref('whispers').once('value');
+        const data = snap.val();
+        if (!data) return;
 
-    const now = Date.now();
-    const cutoff = now - 20000; // 20 sekundi
+        const now = Date.now();
+        const cutoff = now - 20000; // 20 sekundi
 
-    Object.entries(data).forEach(([key, val]) => {
-      if (val.time < cutoff) {
-        db.ref('whispers/' + key).remove();
+        Object.entries(data).forEach(([key, val]) => {
+          if (val.time < cutoff) {
+            db.ref('whispers/' + key).remove();
+          }
+        });
+
+        console.log('[whispr] auto-clean done');
+      } catch (e) {
+        console.error('[whispr] auto-clean error:', e);
       }
-    });
+    }, 20000); // pokreće se svakih 20 sekundi
+    /* ====== SOLANA GATE: FREE → HOLDERS-ONLY (koristi tvoje varijable) ====== */
 
-    console.log('[whispr] auto-clean done');
-  } catch (e) {
-    console.error('[whispr] auto-clean error:', e);
-  }
-}, 20000); // pokreće se svakih 20 sekundi
-/* ====== SOLANA GATE: FREE → HOLDERS-ONLY (koristi tvoje varijable) ====== */
-
-// 6) Eventi (klik + Enter)
+    // 6) Eventi (klik + Enter)
     button.addEventListener('click', sendWhisper);
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
@@ -643,6 +639,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
