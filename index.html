@@ -351,27 +351,21 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
 
-<!-- ✅ Buffer polyfill MORA biti prije web3.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- ✅ Buffer polyfill koji SAM stavi globalni Buffer -->
+<script src="https://unpkg.com/buffer@6.0.3/index.js"></script>
 <script>
-  // Postavi Buffer globalno (za web3.js i tvoj kod)
-  if (window.buffer && window.buffer.Buffer) {
-    window.Buffer = window.buffer.Buffer;
-    globalThis.Buffer = window.buffer.Buffer;
-  } else {
-    console.error('[whispr] buffer polyfill nije učitan!');
-  }
-  // (ne škodi dodatno)
+  // safety (u slučaju cache-a)
+  if (!window.Buffer && window.buffer?.Buffer) window.Buffer = window.buffer.Buffer;
+  if (!globalThis.Buffer && window.buffer?.Buffer) globalThis.Buffer = window.buffer.Buffer;
   if (!window.global)  window.global  = window;
   if (!window.process) window.process = { env: {} };
 </script>
 
 <!-- ✅ Solana web3 IIFE — TEK nakon Buffer-a -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script>
-  // (dodatni guard – ok je imati ga i ovdje)
-  if (!window.Buffer && window.buffer?.Buffer) { window.Buffer = window.buffer.Buffer; }
-  if (!globalThis.Buffer && window.buffer?.Buffer) { globalThis.Buffer = window.buffer.Buffer; }
+ <script>
+  if (!window.Buffer && window.buffer?.Buffer) window.Buffer = window.buffer.Buffer;
+  if (!globalThis.Buffer && window.buffer?.Buffer) globalThis.Buffer = window.buffer.Buffer;
    
 (function(){
   console.log('[whispr] boot');
@@ -462,6 +456,15 @@ async function onColorBtnClick() {
     if (!blockhash) { throw new Error('No blockhash from backend'); }
 
     colorStatus.textContent = 'opening Phantom…';
+
+    // složi transfer (bez browser Connection-a)
+const fromPubkey = provider.publicKey;
+const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
+const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
+
+// ⬇️ DODAJ OVE DVIJE LINIJE OVDJE (prije Transaction)
+if (!window.Buffer && window.buffer?.Buffer) window.Buffer = window.buffer.Buffer;
+if (!globalThis.Buffer && window.buffer?.Buffer) globalThis.Buffer = window.buffer.Buffer;
 
     // složi transfer (bez browser Connection-a)
     const fromPubkey = provider.publicKey;
@@ -628,6 +631,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
