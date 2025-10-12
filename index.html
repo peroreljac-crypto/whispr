@@ -153,6 +153,7 @@
   margin-bottom: 25px;
   width: 100%;
 }
+}
 
 #whisperInput{
   width: min(800px, 90vw);
@@ -295,21 +296,21 @@
     
     <small>the value is in silence. 🔇</small>
     <div class="whisper-box">
-      <input id="whisperInput" type="text" maxlength="140"
-             placeholder="send a whispr.">
-      <button id="whisperSend" aria-label="send whisper">send 🔇</button>
-      <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
-      <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
-    </div>
+  <input id="whisperInput" type="text" maxlength="140"
+         placeholder="send a whispr.">
+  <button id="whisperSend" aria-label="send whisper">send 🔇</button>
+  <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
+  <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
+</div>
     <!-- ⬇️ ADD: Colored whisper UI -->
-    <div class="color-row">
-      <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
-      <span id="colorStatus">no color active</span>
-    </div>
+<div class="color-row">
+  <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
+  <span id="colorStatus">no color active</span>
+</div>
     <div class="footer-links">
-      <a href="https://x.com/whisprcoin" target="_blank">x</a>
-      <a href="#" target="_blank">solscan (soon)</a>
-    </div>
+  <a href="https://x.com/whisprcoin" target="_blank">x</a>
+  <a href="#" target="_blank">solscan (soon)</a>
+</div>
   </div>
   <script>
   const whispers = document.querySelectorAll('.whispers span');
@@ -363,16 +364,17 @@
 <!-- Buffer polyfill -->
 <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
 
-<!-- ✅ This new file must be between buffer.min.js and web3.js -->
+<!-- ✅ OVAJ NOVI FAJL MORA BITI IZMEĐU buffer.min.js i web3.js -->
 <script src="./buffer-shim.js?v=1.0.1"></script>
+<!-- Ako ti je index.html u /docs, onda je opet ./buffer-setup.js jer je u istom folderu -->
 
-<!-- Solana web3 IIFE (after buffer-shim.js) -->
+<!-- Solana web3 IIFE (nakon buffer-setup.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous"></script>
  <script>
 (function(){
   console.log('[whispr] boot');
 
-  // 1) Init when everything is loaded (so elements exist)
+  // 1) Init kad se sve učita (da elementi postoje)
   window.addEventListener('load', function(){
     console.log('[whispr] dom ready');
 
@@ -388,7 +390,7 @@
       measurementId: "G-ZYWYEXVG4F"
     };
 
-    if (!window.firebase) { console.error('[whispr] Firebase SDK not loaded'); return; }
+    if (!window.firebase) { console.error('[whispr] Firebase SDK nije učitan'); return; }
     if (!firebase.apps.length) { firebase.initializeApp(cfg); console.log('[whispr] firebase init OK'); }
     const db = firebase.database();
 
@@ -399,12 +401,12 @@
     const getBlockhash = fns.httpsCallable('getBlockhash');
     const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
 
-    // === UI elements for colored pass ===
+    // === UI elementi za colored pass (tvoj gumb i status) ===
     const colorBtn    = document.getElementById('colorWhisperBtn');
     const colorStatus = document.getElementById('colorStatus');
 
-    // global state
-    let userPubkey = null;   // will be set on Phantom connect
+    // globalno stanje
+    let userPubkey = null;   // postavit će se kad spojiš Phantom
     let passActive = false;
     let passUntil  = 0;
 
@@ -426,7 +428,7 @@
       afterWalletConnected(provider.publicKey.toString());
     }
 
-    // Call this WHEN PHANTOM IS CONNECTED
+    // Pozovi ovo KAD SPOJIŠ PHANTOM (vidi korak niže)
     async function afterWalletConnected(pubkey){
       userPubkey = pubkey;
       try {
@@ -440,19 +442,19 @@
       }
     }
 
-    // Click on "✨ Get colored whispers — 0.01 SOL / 24 h" button
+    // Klik na tvoj gumb "✨ Get colored whispers — 0.01 SOL / 24 h"
     async function onColorBtnClick() {
       const provider = window.solana;
-      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // same as in backend
+      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // isti kao u backendu
       const PRICE_SOL = 0.01;
 
-      if (!provider?.isPhantom) { alert('Phantom wallet is not installed.'); return; }
-      if (!window.solanaWeb3)   { alert('Solana web3 not loaded (hard refresh).'); return; }
+      if (!provider?.isPhantom) { alert('Phantom wallet nije instaliran.'); return; }
+      if (!window.solanaWeb3)   { alert('Solana web3 nije učitan (hard refresh).'); return; }
 
       try {
         colorBtn.disabled = true;
 
-        // connect if needed
+        // connect ako treba
         if (!provider.publicKey) {
           const resp = await provider.connect();
           userPubkey = resp.publicKey.toString();
@@ -461,7 +463,7 @@
         }
 
         colorStatus.textContent = 'getting blockhash…';
-        // ⬇️ blockhash from BACKEND (callable)
+        // ⬇️ blockhash s BACKENDA (callable)
         const bh = await getBlockhash();
         const blockhash = bh?.data?.blockhash;
         const lastValidBlockHeight = bh?.data?.lastValidBlockHeight;
@@ -471,7 +473,7 @@
 
         colorStatus.textContent = 'opening Phantom…';
 
-        // create transfer
+        // složi transfer
         const fromPubkey = provider.publicKey;
         const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
         const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
@@ -491,7 +493,7 @@
           window.solanaWeb3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
         );
 
-        // sign + send through Phantom
+        // potpis + slanje kroz Phantom
         colorStatus.textContent = 'awaiting approval in Phantom…';
         const { signature } = await provider.signAndSendTransaction(tx);
         
@@ -509,7 +511,7 @@
           passUntil  = data.active_until || 0;
           renderColorStatus();
           colorStatus.textContent = '✅ color ACTIVE';
-          console.log('[whispr] PASS activated until:', new Date(passUntil).toLocaleString());
+          console.log('[whispr] PASS aktiviran do:', new Date(passUntil).toLocaleString());
         } else {
           colorStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
           console.log('[whispr] payment not found:', data?.reason);
@@ -522,10 +524,10 @@
       }
     }
 
-    // Bind handler to button
+    // Uveži handler na gumb
     colorBtn?.addEventListener('click', onColorBtnClick);
 
-    // 3) DOM elements
+    // 3) DOM elementi
     const layer  = document.querySelector('.whispers');
     const input  = document.getElementById('whisperInput');
     const button = document.getElementById('whisperSend');
@@ -534,11 +536,11 @@
     console.log('[whispr] elements:', {layer: !!layer, input: !!input, button: !!button});
 
     if (!input || !button) {
-      console.error('[whispr] MISSING #whisperInput or #whisperSend in HTML');
+      console.error('[whispr] MISSING #whisperInput ili #whisperSend u HTML-u');
       return;
     }
 
-    // 4) Helper to draw a floating whisper
+    // 4) Helper za nacrtati lebdeći whisper
     // ✨ CHANGE: Add a `colored` parameter to the floatWhisper function.
     function floatWhisper(text, strong, colored = false){
       if (!layer) return;
@@ -558,7 +560,7 @@
       setTimeout(()=>s.remove(), 12000);
     }
 
-    // 5) Sending to database
+    // 5) Slanje u bazu
     async function sendWhisper(){
       const text = (input.value || '').trim();
       if (!text) return;
@@ -583,7 +585,7 @@
 
       input.value = '';
     }
-    // 🧹 AUTO-CLEAN every 20 seconds
+    // 🧹 AUTO-CLEAN svakih 20 sekundi
     setInterval(async () => {
       try {
         const snap = await db.ref('whispers').once('value');
@@ -591,7 +593,7 @@
         if (!data) return;
 
         const now = Date.now();
-        const cutoff = now - 20000; // 20 seconds
+        const cutoff = now - 20000; // 20 sekundi
 
         Object.entries(data).forEach(([key, val]) => {
           if (val.time < cutoff) {
@@ -603,15 +605,15 @@
       } catch (e) {
         console.error('[whispr] auto-clean error:', e);
       }
-    }, 20000); // runs every 20 seconds
+    }, 20000); // pokreće se svakih 20 sekundi
 
-    // 6) Events (click + Enter)
+    // 6) Eventi (klik + Enter)
     button.addEventListener('click', sendWhisper);
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
     });
   
-    // 7) Live feed (last 20)
+    // 7) Live feed (zadnjih 20)
     // ✨ CHANGE: Listen for `child_added` to get live whispers one by one.
     // This is more efficient and allows us to check the `colored` property.
     db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
@@ -621,7 +623,7 @@
       floatWhisper(item.text, false, !!item.colored);
     });
 
-    // 8) mini test write
+    // 8) mini check upis
     db.ref('connection-test').set({ok:true, t:Date.now()})
       .then(()=>console.log('[whispr] test write OK'))
       .catch(err=>console.error('[whispr] test write FAIL', err));
@@ -631,6 +633,7 @@
 </body>
 
 </html>
+
 
 
 
