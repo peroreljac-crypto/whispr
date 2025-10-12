@@ -351,10 +351,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
-<script>window.Buffer = window.buffer.Buffer;</script>
+<script>
+  // osiguraj Buffer globalno, i na globalThis i na window
+  if (!window.Buffer && window.buffer?.Buffer) { window.Buffer = window.buffer.Buffer; }
+  if (!globalThis.Buffer && window.buffer?.Buffer) { globalThis.Buffer = window.buffer.Buffer; }
+</script>
+  <!-- (opcionalno, ali korisno) process/global shim za neke libove -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/process/0.11.10/process.min.js"></script>
+<script>
+  if (!window.process) window.process = { env: {} };
+  if (!window.global) window.global = window;
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js"></script>
 
 <script>
+  // safety guards ako je netko minificirao/keširao drugačije
+if (!window.Buffer && window.buffer?.Buffer) { window.Buffer = window.buffer.Buffer; }
+if (!globalThis.Buffer && window.buffer?.Buffer) { globalThis.Buffer = window.buffer.Buffer; }
+  
 (function(){
   console.log('[whispr] boot');
 
@@ -610,6 +624,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
