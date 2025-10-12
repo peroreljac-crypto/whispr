@@ -480,33 +480,6 @@ async function onColorBtnClick() {
   }
 }
 
-    // otvara se Phantom za potpis/slanje
-    colorStatus.textContent = 'awaiting approval in Phantom…';
-    const { signature } = await provider.signAndSendTransaction(tx);
-
-    // pričekaj potvrdu na chainu
-    colorStatus.textContent = 'confirming on-chain…';
-    await connection.confirmTransaction(signature, 'confirmed');
-
-    // odmah provjeri pass na backendu
-    colorStatus.textContent = 'verifying pass…';
-    const { data } = await verifyColorPass({ userPubkey });
-    if (data?.ok) {
-      passActive = true;
-      passUntil  = data.active_until || 0;
-      renderColorStatus();
-      colorStatus.textContent = '✅ color ACTIVE';
-      console.log('[whispr] PASS aktiviran do:', new Date(passUntil).toLocaleString());
-    } else {
-      colorStatus.textContent = '❌ payment not found';
-      console.log('[whispr] payment not found:', data?.reason);
-    }
-  } catch (e) {
-    console.error('Payment error:', e);
-    colorStatus.textContent = '❌ cancelled or failed';
-  }
-}
-
 // Uveži handler na gumb
 colorBtn?.addEventListener('click', onColorBtnClick);
 
@@ -635,6 +608,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
