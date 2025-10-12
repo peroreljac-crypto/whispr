@@ -391,9 +391,9 @@
 
     // === Cloud Functions (us-central1) ===
     const fns = firebase.app().functions('us-central1');
-    const getPassStatus = fns.httpsCallable('getPassStatus');
+    const verifyColorPass = fns.httpsCallable('verifyColorPass');
+    const getPassStatus   = fns.httpsCallable('getPassStatus');
     const getBlockhash = fns.httpsCallable('getBlockhash');
-    // ✅ NEW: Point to the new backend function
     const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
 
     // === UI elementi za colored pass (tvoj gumb i status) ===
@@ -413,6 +413,14 @@
       } else {
         colorStatus.textContent = 'no color active';
       }
+    }
+
+    // ✅ FIX: Check for wallet connection on page load.
+    // This will automatically fetch the pass status if the user
+    // has previously connected their wallet to your site.
+    const provider = window.solana;
+    if (provider?.isPhantom && provider.publicKey) {
+      afterWalletConnected(provider.publicKey.toString());
     }
 
     // Pozovi ovo KAD SPOJIŠ PHANTOM (vidi korak niže)
@@ -528,16 +536,19 @@
     }
 
     // 4) Helper za nacrtati lebdeći whisper
-    function floatWhisper(text, strong){
+    // ✨ CHANGE: Add a `colored` parameter to the floatWhisper function.
+    function floatWhisper(text, strong, colored = false){
       if (!layer) return;
       const s = document.createElement('span');
       s.textContent = text;
       s.style.position = 'absolute';
       s.style.top  = (10 + Math.random()*80) + '%';
       s.style.left = (5 + Math.random()*90) + '%';
-      s.style.color = strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
+      // ✨ CHANGE: Apply a different color if the whisper is colored.
+      s.style.setProperty('--whisper-glow-color', colored ? '#a8ffa8' : 'rgba(255,255,255,0.1)');
+      s.style.color = colored ? '#a8ffa8' : (strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)');
+      s.style.textShadow = '0 0 10px var(--whisper-glow-color)';
       s.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
-      s.style.textShadow = strong ? '0 0 10px rgba(255,255,255,0.28)' : '0 0 6px rgba(255,255,255,0.1)';
       s.style.animation = 'whisperMove 12s linear 1';
       s.style.opacity = '0';
       layer.appendChild(s);
@@ -550,11 +561,16 @@
       if (!text) return;
       console.log('[whispr] sending:', text);
 
+      // ✨ CHANGE: Check if the pass is active before sending.
+      const isColored = passActive && (passUntil > Date.now());
+
       // instant feedback
-      floatWhisper(text, true);
+      // ✨ CHANGE: Pass the color status to the display function.
+      floatWhisper(text, true, isColored);
 
       try {
-        await db.ref('whispers').push({ text, time: Date.now() });
+        // ✨ CHANGE: Add the `colored` property to the database object.
+        await db.ref('whispers').push({ text, time: Date.now(), colored: isColored });
         console.log('[whispr] saved');
         if (status){ status.textContent = 'sent.'; setTimeout(()=>status.textContent='', 1500); }
       } catch(e){
@@ -585,7 +601,6 @@
         console.error('[whispr] auto-clean error:', e);
       }
     }, 20000); // pokreće se svakih 20 sekundi
-    /* ====== SOLANA GATE: FREE → HOLDERS-ONLY (koristi tvoje varijable) ====== */
 
     // 6) Eventi (klik + Enter)
     button.addEventListener('click', sendWhisper);
@@ -594,12 +609,13 @@
     });
   
     // 7) Live feed (zadnjih 20)
-    db.ref('whispers').orderByChild('time').limitToLast(20).on('value', snap => {
-      const data = snap.val();
-      console.log('[whispr] feed update:', !!data);
-      if (!data) return;
-      const list = Object.values(data).sort((a,b)=>a.time-b.time);
-      list.forEach(item => floatWhisper(item.text, false));
+    // ✨ CHANGE: Listen for `child_added` to get live whispers one by one.
+    // This is more efficient and allows us to check the `colored` property.
+    db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
+      const item = snap.val();
+      if (!item || !item.text) return;
+      // The `strong` parameter is false for whispers from other users.
+      floatWhisper(item.text, false, !!item.colored);
     });
 
     // 8) mini check upis
@@ -608,37 +624,11 @@
       .catch(err=>console.error('[whispr] test write FAIL', err));
   });
 })();
-  const liveLayer = document.querySelector('.live-whispers');
-
-function floatLiveWhisper(text, strong = false) {
-  if (!liveLayer || !text) return;
-  const span = document.createElement('span');
-  span.textContent = text;
-  span.style.position = 'absolute';
-  span.style.top = (10 + Math.random() * 80) + '%';
-  span.style.left = (5 + Math.random() * 90) + '%';
-  span.style.color = strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)';
-  span.style.fontSize = (18 + Math.floor(Math.random() * 6)) + 'px';
-  span.style.textShadow = strong ? '0 0 10px rgba(255,255,255,0.28)' : '0 0 6px rgba(255,255,255,0.12)';
-  span.style.animation = 'whisperMove 12s linear 1';
-  span.style.opacity = '0';
-  liveLayer.appendChild(span);
-  setTimeout(() => span.remove(), 12000);
-}
-
-// 🔁 sluša samo nove whispere iz baze
-db.ref('whispers')
-  .orderByChild('time')
-  .limitToLast(20)
-  .on('child_added', snap => {
-    const w = snap.val();
-    if (!w || !w.text) return;
-    floatLiveWhisper(w.text, false);
-  });
 </script>
 </body>
 
 </html>
+
 
 
 
