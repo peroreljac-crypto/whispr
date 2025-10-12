@@ -467,8 +467,13 @@ async function onColorBtnClick() {
     const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
     const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
 
-   if (!window.Buffer && window.buffer?.Buffer) window.Buffer = window.buffer.Buffer;
-   if (!globalThis.Buffer && window.buffer?.Buffer) globalThis.Buffer = window.buffer.Buffer;
+  if (window.buffer?.Buffer) {
+  window.Buffer = window.buffer.Buffer;
+  globalThis.Buffer = window.buffer.Buffer;
+}
+if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
+  Buffer.from = window.buffer.Buffer.from.bind(window.buffer.Buffer);
+}
     
     const tx = new window.solanaWeb3.Transaction({
       feePayer: fromPubkey,
@@ -630,6 +635,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
