@@ -255,6 +255,20 @@
 /* zaključan UI */
 #whisperInput[disabled]{ opacity:.6; cursor:not-allowed; }
 #whisperSend[disabled]{ opacity:.6; cursor:not-allowed; }
+    .color-row{
+  margin-top:10px;
+  display:flex; gap:10px; align-items:center; justify-content:center;
+  color:#cfcfcf;
+}
+#colorWhisperBtn{
+  padding:6px 10px;
+  border-radius:6px;
+  background:linear-gradient(90deg,#111,#222);
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.06);
+  font-family:'VT323', monospace;
+}
+#colorStatus{ font-size:13px; color:#9c9c9c; }
   </style>
 </head>
 <body>
@@ -277,6 +291,11 @@
   <button id="whisperSend" aria-label="send whisper">send 🔇</button>
   <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
   <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
+</div>
+    <!-- ⬇️ ADD: Colored whisper UI -->
+<div class="color-row">
+  <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
+  <span id="colorStatus">no color active</span>
 </div>
     <div class="footer-links">
   <a href="https://x.com/whisprcoin" target="_blank">x</a>
@@ -480,6 +499,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
