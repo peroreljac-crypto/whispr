@@ -350,7 +350,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
-<script src="https://unpkg.com/@solana/web3.js@1.95.2/dist/web3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js"></script>
 
 <script>
 (function(){
@@ -418,11 +418,15 @@ async function afterWalletConnected(pubkey){
 // 1-klik: otvori Phantom -> plati 0.01 SOL -> verificiraj
 async function onColorBtnClick() {
   const provider = window.solana;
-  const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // <-- zamijeni svojom Solana adresom (mora biti ista kao na backendu)
+  const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // mora biti isti kao na backendu
   const PRICE_SOL = 0.01;
 
   if (!provider?.isPhantom) {
     alert('Phantom wallet nije instaliran.');
+    return;
+  }
+  if (!window.solanaWeb3) {
+    alert('Greška: Solana web3 nije učitan. Osvježi stranicu.');
     return;
   }
 
@@ -438,17 +442,17 @@ async function onColorBtnClick() {
     colorStatus.textContent = 'opening Phantom…';
 
     // pripremi Solana transfer 0.01 SOL
-    const connection = new solanaWeb3.Connection('https://rpc.ankr.com/solana', 'confirmed');
+    const connection = new window.solanaWeb3.Connection('https://rpc.ankr.com/solana', 'confirmed');
     const fromPubkey = provider.publicKey;
-    const toPubkey   = new solanaWeb3.PublicKey(MERCHANT);
+    const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
     const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
 
     const { blockhash } = await connection.getLatestBlockhash();
-    const tx = new solanaWeb3.Transaction({
+    const tx = new window.solanaWeb3.Transaction({
       feePayer: fromPubkey,
       recentBlockhash: blockhash,
     }).add(
-      solanaWeb3.SystemProgram.transfer({
+      window.solanaWeb3.SystemProgram.transfer({
         fromPubkey,
         toPubkey,
         lamports,
@@ -610,6 +614,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
