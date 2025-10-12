@@ -268,6 +268,11 @@
   border:1px solid rgba(255,255,255,0.06);
   font-family:'VT323', monospace;
 }
+#colorWhisperBtn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #222;
+}
 #colorStatus{ font-size:13px; color:#9c9c9c; }
   </style>
 </head>
@@ -424,8 +429,6 @@ async function afterWalletConnected(pubkey){
 }
 
 // Klik na tvoj gumb "✨ Get colored whispers — 0.01 SOL / 24 h"
-// 1-klik: otvori Phantom -> plati 0.01 SOL -> verificiraj
-// 1-klik: Phantom -> plati 0.01 SOL -> verificiraj (bez browser RPC-a)
 async function onColorBtnClick() {
   const provider = window.solana;
   const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // isti kao u backendu
@@ -435,6 +438,9 @@ async function onColorBtnClick() {
   if (!window.solanaWeb3)   { alert('Solana web3 nije učitan (hard refresh).'); return; }
 
   try {
+    // ✅ UI IMPROVEMENT: Disable button to prevent multiple clicks
+    colorBtn.disabled = true;
+
     // connect ako treba
     if (!provider.publicKey) {
       const resp = await provider.connect();
@@ -456,13 +462,13 @@ async function onColorBtnClick() {
     const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
     const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
 
-  if (window.buffer?.Buffer) {
-  window.Buffer = window.buffer.Buffer;
-  globalThis.Buffer = window.buffer.Buffer;
-}
-if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
-  Buffer.from = window.buffer.Buffer.from.bind(window.buffer.Buffer);
-}
+    if (window.buffer?.Buffer) {
+      window.Buffer = window.buffer.Buffer;
+      globalThis.Buffer = window.buffer.Buffer;
+    }
+    if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
+      Buffer.from = window.buffer.Buffer.from.bind(window.buffer.Buffer);
+    }
     
     const tx = new window.solanaWeb3.Transaction({
       feePayer: fromPubkey,
@@ -474,11 +480,20 @@ if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
     // potpis + slanje kroz Phantom
     colorStatus.textContent = 'awaiting approval in Phantom…';
     const { signature } = await provider.signAndSendTransaction(tx);
+    
+    // ✅ FIX: Wait for the transaction to be confirmed by the network.
+    // This is the most important change. We create a temporary connection
+    // object just to confirm the transaction on the client side before
+    // asking our backend to verify it.
+    colorStatus.textContent = 'confirming transaction…';
+    const conn = new window.solanaWeb3.Connection(
+      'https://api.mainnet-beta.solana.com', // A public RPC is fine for this one-off check
+      'confirmed'
+    );
+    await conn.confirmTransaction({ signature, blockhash, lastValidBlockHeight: bh.data.lastValidBlockHeight });
 
-    // (opcionalno) kratko pričekaj 2–4s
     colorStatus.textContent = 'verifying on backend…';
-
-    // provjera passa (backend skenira uplate na tvoj MERCHANT)
+    // Now that the transaction is confirmed, we can safely ask our backend to verify.
     const { data } = await verifyColorPass({ userPubkey });
     if (data?.ok) {
       passActive = true;
@@ -490,9 +505,13 @@ if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
       colorStatus.textContent = '❌ payment not found';
       console.log('[whispr] payment not found:', data?.reason);
     }
+    // ✅ UI IMPROVEMENT: Re-enable button on success
+    colorBtn.disabled = false;
   } catch (e) {
     console.error('Payment error:', e);
     colorStatus.textContent = '❌ cancelled or failed';
+    // ✅ UI IMPROVEMENT: Re-enable button on error
+    colorBtn.disabled = false;
   }
 }
 
@@ -624,6 +643,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
