@@ -368,12 +368,15 @@
 
 <!-- ✅ Solana web3 IIFE — TEK nakon Buffer-a -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script>
-  // Dodatni guard (ako je keš zeznuo redoslijed)
+  <script>
+  // (dodatni guard – ok je imati ga i ovdje)
   if (!window.Buffer && window.buffer?.Buffer) { window.Buffer = window.buffer.Buffer; }
   if (!globalThis.Buffer && window.buffer?.Buffer) { globalThis.Buffer = window.buffer.Buffer; }
+   
+(function(){
+  console.log('[whispr] boot');
 
-  (function(){
+  // 1) Init kad se sve učita (da elementi postoje)
   window.addEventListener('load', function(){
     console.log('[whispr] dom ready');
 
@@ -594,9 +597,9 @@ setInterval(async () => {
       .catch(err=>console.error('[whispr] test write FAIL', err));
   });
 })();
+  const liveLayer = document.querySelector('.live-whispers');
 
-
-{
+function floatLiveWhisper(text, strong = false) {
   if (!liveLayer || !text) return;
   const span = document.createElement('span');
   span.textContent = text;
@@ -611,6 +614,16 @@ setInterval(async () => {
   liveLayer.appendChild(span);
   setTimeout(() => span.remove(), 12000);
 }
+
+// 🔁 sluša samo nove whispere iz baze
+db.ref('whispers')
+  .orderByChild('time')
+  .limitToLast(20)
+  .on('child_added', snap => {
+    const w = snap.val();
+    if (!w || !w.text) return;
+    floatLiveWhisper(w.text, false);
+  });
 </script>
 </body>
 
