@@ -349,6 +349,8 @@
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
+<script src="https://unpkg.com/@solana/web3.js@1.95.2/dist/web3.min.js"></script>
 
 <script>
 (function(){
@@ -373,6 +375,115 @@
     if (!window.firebase) { console.error('[whispr] Firebase SDK nije učitan'); return; }
     if (!firebase.apps.length) { firebase.initializeApp(cfg); console.log('[whispr] firebase init OK'); }
     const db = firebase.database();
+
+    // === Cloud Functions (us-central1) ===
+const fns = firebase.app().functions('us-central1');
+const verifyColorPass = fns.httpsCallable('verifyColorPass');
+const getPassStatus   = fns.httpsCallable('getPassStatus');
+
+// === UI elementi za colored pass (tvoj gumb i status) ===
+const colorBtn    = document.getElementById('colorWhisperBtn');
+const colorStatus = document.getElementById('colorStatus');
+
+// globalno stanje
+let userPubkey = null;   // postavit će se kad spojiš Phantom
+let passActive = false;
+let passUntil  = 0;
+
+function renderColorStatus() {
+  if (!colorStatus) return;
+  if (passActive) {
+    const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
+    colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
+  } else {
+    colorStatus.textContent = 'no color active';
+  }
+}
+
+// Pozovi ovo KAD SPOJIŠ PHANTOM (vidi korak niže)
+async function afterWalletConnected(pubkey){
+  userPubkey = pubkey;
+  try {
+    const { data } = await getPassStatus({ userPubkey });
+    passActive = !!data.active;
+    passUntil  = data.active_until || 0;
+    renderColorStatus();
+    console.log('[whispr] getPassStatus:', data);
+  } catch (e) {
+    console.error('[whispr] getPassStatus error:', e);
+  }
+}
+
+// Klik na tvoj gumb "✨ Get colored whispers — 0.01 SOL / 24 h"
+// 1-klik: otvori Phantom -> plati 0.01 SOL -> verificiraj
+async function onColorBtnClick() {
+  const provider = window.solana;
+  const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // <-- zamijeni svojom Solana adresom (mora biti ista kao na backendu)
+  const PRICE_SOL = 0.01;
+
+  if (!provider?.isPhantom) {
+    alert('Phantom wallet nije instaliran.');
+    return;
+  }
+
+  try {
+    // ako nije spojen, spoji (otvara Phantom connect)
+    if (!provider.publicKey) {
+      const resp = await provider.connect();
+      userPubkey = resp.publicKey.toString();
+    } else {
+      userPubkey = provider.publicKey.toString();
+    }
+
+    colorStatus.textContent = 'opening Phantom…';
+
+    // pripremi Solana transfer 0.01 SOL
+    const connection = new solanaWeb3.Connection('https://rpc.ankr.com/solana', 'confirmed');
+    const fromPubkey = provider.publicKey;
+    const toPubkey   = new solanaWeb3.PublicKey(MERCHANT);
+    const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
+
+    const { blockhash } = await connection.getLatestBlockhash();
+    const tx = new solanaWeb3.Transaction({
+      feePayer: fromPubkey,
+      recentBlockhash: blockhash,
+    }).add(
+      solanaWeb3.SystemProgram.transfer({
+        fromPubkey,
+        toPubkey,
+        lamports,
+      })
+    );
+
+    // otvara se Phantom za potpis/slanje
+    colorStatus.textContent = 'awaiting approval in Phantom…';
+    const { signature } = await provider.signAndSendTransaction(tx);
+
+    // pričekaj potvrdu na chainu
+    colorStatus.textContent = 'confirming on-chain…';
+    await connection.confirmTransaction(signature, 'confirmed');
+
+    // odmah provjeri pass na backendu
+    colorStatus.textContent = 'verifying pass…';
+    const { data } = await verifyColorPass({ userPubkey });
+    if (data?.ok) {
+      passActive = true;
+      passUntil  = data.active_until || 0;
+      renderColorStatus();
+      colorStatus.textContent = '✅ color ACTIVE';
+      console.log('[whispr] PASS aktiviran do:', new Date(passUntil).toLocaleString());
+    } else {
+      colorStatus.textContent = '❌ payment not found';
+      console.log('[whispr] payment not found:', data?.reason);
+    }
+  } catch (e) {
+    console.error('Payment error:', e);
+    colorStatus.textContent = '❌ cancelled or failed';
+  }
+}
+
+// Uveži handler na gumb
+colorBtn?.addEventListener('click', onColorBtnClick);
 
     // 3) DOM elementi
     const layer  = document.querySelector('.whispers');
@@ -499,6 +610,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
