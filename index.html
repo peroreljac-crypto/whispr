@@ -442,7 +442,7 @@ async function onColorBtnClick() {
     colorStatus.textContent = 'opening Phantom…';
 
     // pripremi Solana transfer 0.01 SOL
-    const connection = new window.solanaWeb3.Connection('https://rpc.ankr.com/solana', 'confirmed');
+    const connection = new window.solanaWeb3.Connection('https://api.mainnet-beta.solana.com', 'confirmed');
     const fromPubkey = provider.publicKey;
     const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
     const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
@@ -614,6 +614,7 @@ db.ref('whispers')
 </body>
 
 </html>
+
 
 
 
