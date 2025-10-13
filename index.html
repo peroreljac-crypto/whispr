@@ -306,6 +306,13 @@
       <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
       <span id="colorStatus">no color active</span>
     </div>
+
+    <!-- ✅ NEW: Manual check button -->
+    <div class="wallet-row">
+      <button id="checkPassBtn" type="button">Check My Pass Status</button>
+      <span id="walletStatus"></span>
+    </div>
+
     <div class="footer-links">
       <a href="https://x.com/whisprcoin" target="_blank">x</a>
       <a href="#" target="_blank">solscan (soon)</a>
@@ -398,41 +405,18 @@
     const getBlockhash = fns.httpsCallable('getBlockhash');
     const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
 
-    // === UI elements for colored pass ===
+    // === UI elements ===
     const colorBtn    = document.getElementById('colorWhisperBtn');
     const colorStatus = document.getElementById('colorStatus');
+    // ✅ NEW: Get the new button
+    const checkPassBtn = document.getElementById('checkPassBtn');
+    const walletStatus = document.getElementById('walletStatus');
+
 
     // global state
     let userPubkey = null;   // will be set on Phantom connect
     let passActive = false;
     let passUntil  = 0;
-
-    // --- ✅ NEW: localStorage helpers ---
-    const getLocalPass = (pubkey) => {
-      try {
-        const data = localStorage.getItem(`whispr_pass_${pubkey}`);
-        if (!data) return null;
-        const pass = JSON.parse(data);
-        // Check if it has expired
-        if (pass && pass.active_until > Date.now()) {
-          return pass;
-        }
-        // Clean up expired pass
-        localStorage.removeItem(`whispr_pass_${pubkey}`);
-        return null;
-      } catch (e) {
-        return null;
-      }
-    };
-
-    const setLocalPass = (pubkey, passData) => {
-      try {
-        localStorage.setItem(`whispr_pass_${pubkey}`, JSON.stringify(passData));
-      } catch (e) {
-        console.error("Failed to save pass to localStorage", e);
-      }
-    };
-    // --- End localStorage helpers ---
 
     function renderColorStatus() {
       if (!colorStatus) return;
@@ -444,60 +428,49 @@
       }
     }
 
-    // ✅ NEW: Function that is called when the wallet is connected
-    async function afterWalletConnected(pubkey){
-      if (!pubkey) return;
-      userPubkey = pubkey;
-
-      // 1. First, check local state for a fast UI update
-      const localPass = getLocalPass(pubkey);
-      if (localPass) {
-        console.log('[whispr] Found valid pass in localStorage.');
-        passActive = true;
-        passUntil = localPass.active_until;
-        renderColorStatus();
+    // ✅ NEW: Manual check logic
+    async function onCheckPassClick() {
+      const provider = window.solana;
+      if (!provider?.isPhantom) {
+        alert('Phantom wallet is not installed.');
+        return;
       }
+      
+      checkPassBtn.disabled = true;
+      walletStatus.textContent = 'Connecting wallet...';
 
-      // 2. Then, ALWAYS verify with the backend to refresh the state
       try {
-        console.log('[whispr] Verifying pass status with backend...');
-        const { data } = await getPassStatus({ userPubkey: pubkey });
-        passActive = !!data.active;
-        passUntil  = data.active_until || 0;
-        
-        if (passActive) {
-          setLocalPass(pubkey, { active_until: passUntil });
+        if (!provider.publicKey) {
+          const resp = await provider.connect();
+          userPubkey = resp.publicKey.toString();
+        } else {
+          userPubkey = provider.publicKey.toString();
         }
         
+        walletStatus.textContent = 'Checking status...';
+        await afterWalletConnected(userPubkey);
+        walletStatus.textContent = ''; // Clear status on success
+      } catch (e) {
+        console.error('[whispr] Wallet connection or status check failed', e);
+        walletStatus.textContent = '❌ Wallet connection failed.';
+      } finally {
+        checkPassBtn.disabled = false;
+      }
+    }
+
+    // Call this WHEN PHANTOM IS CONNECTED
+    async function afterWalletConnected(pubkey){
+      userPubkey = pubkey;
+      try {
+        const { data } = await getPassStatus({ userPubkey });
+        passActive = !!data.active;
+        passUntil  = data.active_until || 0;
         renderColorStatus();
-        console.log('[whispr] getPassStatus from backend:', data);
+        console.log('[whispr] getPassStatus:', data);
       } catch (e) {
         console.error('[whispr] getPassStatus error:', e);
       }
     }
-
-    // ✅ NEW: Robust wallet check on page load
-    const handleWalletReady = async () => {
-      const provider = window.solana;
-      if (!provider?.isPhantom) {
-        console.log('[whispr] Phantom not installed.');
-        return;
-      }
-
-      try {
-        // onlyIfTrusted will not show a popup, it will just connect if the site is already trusted
-        const resp = await provider.connect({ onlyIfTrusted: true });
-        console.log('[whispr] Phantom auto-connected.');
-        await afterWalletConnected(resp.publicKey.toString());
-      } catch (err) {
-        // This error means the user has not previously approved the site, which is OK.
-        console.log('[whispr] Phantom not auto-connected (user needs to connect manually).');
-      }
-    };
-    
-    // Listen for the 'load' event to be sure `window.solana` is available
-    window.addEventListener('load', handleWalletReady);
-
 
     // Click on "✨ Get colored whispers — 0.01 SOL / 24 h" button
     async function onColorBtnClick() {
@@ -511,19 +484,21 @@
       try {
         colorBtn.disabled = true;
 
-        // connect if needed (will show popup)
+        // connect if needed
         if (!provider.publicKey) {
           const resp = await provider.connect();
-          await afterWalletConnected(resp.publicKey.toString());
+          userPubkey = resp.publicKey.toString();
+          // After connecting, check their pass status
+          await afterWalletConnected(userPubkey);
         } else {
           userPubkey = provider.publicKey.toString();
         }
 
-        // If the pass is already active, don't make them pay again
+        // If the pass is already active, don't make them pay again.
         if (passActive && passUntil > Date.now()) {
-          colorStatus.textContent = '✅ color already active!';
-          colorBtn.disabled = false;
-          return;
+            colorStatus.textContent = '✅ color already active!';
+            colorBtn.disabled = false;
+            return;
         }
 
         colorStatus.textContent = 'getting blockhash…';
@@ -573,7 +548,6 @@
         if (data?.ok) {
           passActive = true;
           passUntil  = data.active_until || 0;
-          setLocalPass(userPubkey, { active_until: passUntil }); // ✅ Save to localStorage
           renderColorStatus();
           console.log('[whispr] PASS activated until:', new Date(passUntil).toLocaleString());
         } else {
@@ -588,8 +562,10 @@
       }
     }
 
-    // Bind handler to button
+    // Bind handlers to buttons
     colorBtn?.addEventListener('click', onColorBtnClick);
+    // ✅ NEW: Bind the new button
+    checkPassBtn?.addEventListener('click', onCheckPassClick);
 
     // 3) DOM elements
     const layer  = document.querySelector('.whispers');
@@ -697,6 +673,8 @@
 </body>
 
 </html>
+
+
 
 
 
