@@ -406,6 +406,7 @@
     const getPassStatus   = fns.httpsCallable('getPassStatus');
     const getBlockhash = fns.httpsCallable('getBlockhash');
     const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
+    const sendWhisperFn = fns.httpsCallable('sendWhisper'); // ✅ ADD: New function for sending whispers
 
     // === UI elementi za colored pass (tvoj gumb i status) ===
     const colorBtn    = document.getElementById('colorWhisperBtn');
@@ -416,6 +417,7 @@
     let userPubkey = null;   // postavit će se kad spojiš Phantom
     let passActive = false;
     let passUntil  = 0;
+    const ownWhisperIds = new Set(); // ✅ ADD: A set to track our own whispers to prevent double-display.
 
     function renderColorStatus() {
       if (!colorStatus) return;
@@ -598,7 +600,6 @@
     }
 
     // 4) Helper za nacrtati lebdeći whisper
-    // ✨ CHANGE: Add a `colored` parameter to the floatWhisper function.
     function floatWhisper(text, strong, colored = false){
       if (!layer) return;
       const s = document.createElement('span');
@@ -606,7 +607,6 @@
       s.style.position = 'absolute';
       s.style.top  = (10 + Math.random()*80) + '%';
       s.style.left = (5 + Math.random()*90) + '%';
-      // ✨ CHANGE: Apply a different color if the whisper is colored.
       s.style.setProperty('--whisper-glow-color', colored ? '#a8ffa8' : 'rgba(255,255,255,0.1)');
       s.style.color = colored ? '#a8ffa8' : (strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)');
       s.style.textShadow = '0 0 10px var(--whisper-glow-color)';
@@ -618,30 +618,60 @@
     }
 
     // 5) Slanje u bazu
-    async function sendWhisper(){
+    async function sendWhisper() {
       const text = (input.value || '').trim();
       if (!text) return;
+
+      // Disable UI to prevent spamming the send button
+      input.disabled = true;
+      button.disabled = true;
+      status.textContent = 'sending...';
+      status.classList.add('show');
+
       console.log('[whispr] sending:', text);
 
-      // ✨ CHANGE: Check if the pass is active before sending.
+      // ✅ CHANGE: Optimistic UI - show the whisper immediately.
       const isColored = passActive && (passUntil > Date.now());
+      floatWhisper(text, true, isColored); // `true` for strong, instant feedback
 
-      // instant feedback
-      // ✨ CHANGE: Pass the color status to the display function.
-      floatWhisper(text, true, isColored);
+      // ✅ CHANGE: Generate a unique ID to prevent double-display.
+      const clientId = `${Date.now()}-${Math.random()}`;
+      ownWhisperIds.add(clientId);
 
       try {
-        // ✨ CHANGE: Add the `colored` property to the database object.
-        await db.ref('whispers').push({ text, time: Date.now(), colored: isColored });
-        console.log('[whispr] saved');
-        if (status){ status.textContent = 'sent.'; setTimeout(()=>status.textContent='', 1500); }
-      } catch(e){
-        console.error('[whispr] save ERROR', e);
-        if (status){ status.textContent = 'error.'; setTimeout(()=>status.textContent='', 2000); }
+        // Call the secure Cloud Function with the text and the unique client ID.
+        const { data } = await sendWhisperFn({ text, userPubkey, clientId });
+
+        if (data.ok) {
+          console.log('[whispr] sent successfully via backend');
+          status.textContent = 'sent.';
+        } else {
+          // If the backend rejects it, show the reason.
+          status.textContent = `❌ ${data.reason || 'Could not send'}`;
+          console.error('[whispr] send failed:', data.reason);
+        }
+      } catch (e) {
+        console.error('[whispr] sendWhisper function error', e);
+        status.textContent = '❌ error sending.';
+      } finally {
+        // Clean up the ID after a while to prevent memory leaks.
+        setTimeout(() => {
+          ownWhisperIds.delete(clientId);
+        }, 15000); // 15 seconds is safe.
       }
 
       input.value = '';
+      // Re-enable UI after a delay
+      setTimeout(() => {
+        input.disabled = false;
+        button.disabled = false;
+        if (status) {
+          status.classList.remove('show');
+          status.textContent = '';
+        }
+      }, 2000);
     }
+    
     // 🧹 AUTO-CLEAN svakih 20 sekundi
     setInterval(async () => {
       try {
@@ -671,11 +701,17 @@
     });
   
     // 7) Live feed (zadnjih 20)
-    // ✨ CHANGE: Listen for `child_added` to get live whispers one by one.
-    // This is more efficient and allows us to check the `colored` property.
     db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
       const item = snap.val();
       if (!item || !item.text) return;
+
+      // ✅ CHANGE: Check if this is our own whisper that we just sent.
+      // If it is, we've already displayed it optimistically, so we do nothing.
+      if (item.clientId && ownWhisperIds.has(item.clientId)) {
+        console.log('[whispr] Ignoring own whisper from live feed to prevent double-display.');
+        return;
+      }
+
       // The `strong` parameter is false for whispers from other users.
       floatWhisper(item.text, false, !!item.colored);
     });
@@ -690,6 +726,8 @@
 </body>
 
 </html>
+
+
 
 
 
