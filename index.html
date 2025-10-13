@@ -273,11 +273,13 @@
   background: #222;
 }
 #colorStatus{ font-size:13px; color:#9c9c9c; }
+  <!-- ⬇️ ADD: Style for the new "Check Status" button -->
+<style>
   #checkStatusBtn {
     padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer;
   }
   #checkStatusBtn:hover { background: #333; color: #fff; }
-  </style>
+</style>
 </head>
 <body>
   <div class="matrix-lines"></div>
@@ -374,7 +376,7 @@
 <!-- Solana web3 IIFE (nakon buffer-setup.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous"></script>
  <script>
-// ✅ ADD: Lightweight profanity filter library
+ // ✅ ADD: Lightweight profanity filter library
 const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this.regex=/@|\$|\\|\*/g,this.replaceRegex=/\w/g}return e.prototype.isProfane=function(e){for(var t=0;t<this.list.length;t++)if(new RegExp("\\b"+this.list[t].replace(/(\W)/g,"\\$1")+"\\b","gi").test(e))return!0;return!1},e.prototype.replaceWord=function(e){return e.replace(this.regex,"").replace(this.replaceRegex,this.placeHolder)},e.prototype.clean=function(e){return e.split(" ").map(function(e){return this.isProfane(e)?this.replaceWord(e):e}.bind(this)).join(" ")},e.prototype.addWords=function(){var e=Array.from(arguments);this.list=this.list.concat(e)},e.prototype.removeWords=function(){for(var e=Array.from(arguments),t=0;t<e.length;t++)for(var r=e[t],i=this.list.length-1;i>=0;i--)this.list[i]===r&&this.list.splice(i,1)},e})();
 
 (function(){
@@ -416,7 +418,6 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     let userPubkey = null;
     let passActive = false;
     let passUntil  = 0;
-    const ownWhisperIds = new Set();
     const profanityFilter = new Filter(); // ✅ ADD: Initialize profanity filter
 
     function renderColorStatus() {
@@ -618,11 +619,11 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     }
 
     // 5) Slanje u bazu
-    async function sendWhisper() {
+    async function sendWhisper(){
       const text = (input.value || '').trim();
       if (!text) return;
 
-      // ✅ ADD: Client-side profanity check
+      // ✅ FIX: Client-side profanity check before anything else.
       if (profanityFilter.isProfane(text)) {
           status.textContent = '❌ inappropriate language';
           status.classList.add('show');
@@ -630,7 +631,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
               status.classList.remove('show');
               status.textContent = '';
           }, 2500);
-          return;
+          return; // Stop the function here.
       }
 
       // Disable UI to prevent spamming the send button
@@ -638,24 +639,16 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       button.disabled = true;
       status.textContent = 'sending...';
       status.classList.add('show');
-
       console.log('[whispr] sending:', text);
 
-      // ✅ CHANGE: Optimistic UI - show the whisper immediately.
-      const isColored = passActive && (passUntil > Date.now());
-      floatWhisper(text, true, isColored); // `true` for strong, instant feedback
-
-      // ✅ CHANGE: Generate a unique ID to prevent double-display.
-      const clientId = `${Date.now()}-${Math.random()}`;
-      ownWhisperIds.add(clientId);
-
       try {
-        // Call the secure Cloud Function with the text and the unique client ID.
-        const { data } = await sendWhisperFn({ text, userPubkey, clientId });
+        // Call the secure Cloud Function.
+        const { data } = await sendWhisperFn({ text, userPubkey });
 
         if (data.ok) {
           console.log('[whispr] sent successfully via backend');
           status.textContent = 'sent.';
+          // The live feed will display the whisper, so no optimistic UI needed.
         } else {
           // If the backend rejects it, show the reason.
           status.textContent = `❌ ${data.reason || 'Could not send'}`;
@@ -664,46 +657,20 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       } catch (e) {
         console.error('[whispr] sendWhisper function error', e);
         status.textContent = '❌ error sending.';
-      } finally {
-        // Clean up the ID after a while to prevent memory leaks.
-        setTimeout(() => {
-          ownWhisperIds.delete(clientId);
-        }, 15000); // 15 seconds is safe.
       }
 
-      input.value = '';
       // Re-enable UI after a delay
+      input.value = '';
       setTimeout(() => {
         input.disabled = false;
         button.disabled = false;
-        if (status) {
-          status.classList.remove('show');
-          status.textContent = '';
-        }
+        status.classList.remove('show');
+        status.textContent = '';
       }, 2000);
     }
     
-    // 🧹 AUTO-CLEAN svakih 20 sekundi
-    setInterval(async () => {
-      try {
-        const snap = await db.ref('whispers').once('value');
-        const data = snap.val();
-        if (!data) return;
-
-        const now = Date.now();
-        const cutoff = now - 20000; // 20 sekundi
-
-        Object.entries(data).forEach(([key, val]) => {
-          if (val.time < cutoff) {
-            db.ref('whispers/' + key).remove();
-          }
-        });
-
-        console.log('[whispr] auto-clean done');
-      } catch (e) {
-        console.error('[whispr] auto-clean error:', e);
-      }
-    }, 20000); // pokreće se svakih 20 sekundi
+    // 🧹 REMOVED: The client-side auto-clean is no longer needed.
+    // This should be handled by a scheduled backend function for reliability.
 
     // 6) Eventi (klik + Enter)
     button.addEventListener('click', sendWhisper);
@@ -715,13 +682,6 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
       const item = snap.val();
       if (!item || !item.text) return;
-
-      // ✅ CHANGE: Check if this is our own whisper that we just sent.
-      // If it is, we've already displayed it optimistically, so we do nothing.
-      if (item.clientId && ownWhisperIds.has(item.clientId)) {
-        console.log('[whispr] Ignoring own whisper from live feed to prevent double-display.');
-        return;
-      }
 
       // The `strong` parameter is false for whispers from other users.
       floatWhisper(item.text, false, !!item.colored);
@@ -736,6 +696,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 </script>
 </body>
 </html>
+
 
 
 
