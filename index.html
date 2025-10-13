@@ -275,6 +275,13 @@
 }
 #colorStatus{ font-size:13px; color:#9c9c9c; }
   </style>
+<!-- ⬇️ ADD: Style for the new "Check Status" button -->
+<style>
+  #checkStatusBtn {
+    padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer;
+  }
+  #checkStatusBtn:hover { background: #333; color: #fff; }
+</style>
 </head>
 <body>
   <div class="matrix-lines"></div>
@@ -302,9 +309,10 @@
   <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
   <span id="colorStatus">no color active</span>
 </div>
-<!-- ⬇️ ADD: Helper text for users who already paid -->
-<div class="whisper-note" style="font-size: 13px; margin-top: 8px;">
-  Already paid? Refresh or reconnect wallet to see status.
+<!-- ⬇️ ADD: Manual status check for users who already paid -->
+<div class="color-row" style="margin-top: 8px; gap: 8px;">
+    <span style="font-size: 13px; color: #9c9c9c;">Already paid?</span>
+    <button id="checkStatusBtn" type="button">Check Status</button>
 </div>
     <div class="footer-links">
   <a href="https://x.com/whisprcoin" target="_blank">x</a>
@@ -402,6 +410,7 @@
     // === UI elementi za colored pass (tvoj gumb i status) ===
     const colorBtn    = document.getElementById('colorWhisperBtn');
     const colorStatus = document.getElementById('colorStatus');
+    const checkStatusBtn = document.getElementById('checkStatusBtn'); // New button
 
     // globalno stanje
     let userPubkey = null;   // postavit će se kad spojiš Phantom
@@ -410,25 +419,36 @@
 
     function renderColorStatus() {
       if (!colorStatus) return;
-      if (passActive) {
+      if (passActive && passUntil > Date.now()) {
         const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
         colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
       } else {
+        passActive = false; // Ensure pass is marked as inactive if time is up
         colorStatus.textContent = 'no color active';
       }
     }
 
-    // ✅ FIX: Check for wallet connection on page load.
-    // This will automatically fetch the pass status if the user
-    // has previously connected their wallet to your site.
-    const provider = window.solana;
-    if (provider?.isPhantom && provider.publicKey) {
-      afterWalletConnected(provider.publicKey.toString());
+    // ✅ FIX: Reliably check for wallet connection on page load.
+    const handleWalletReady = () => {
+        const provider = window.solana;
+        if (provider?.isPhantom && provider.publicKey) {
+            console.log('[whispr] Phantom wallet is already connected.');
+            afterWalletConnected(provider.publicKey.toString());
+        } else {
+            console.log('[whispr] Phantom wallet not connected on load.');
+        }
+    };
+
+    if (window.solana?.isPhantom) {
+        handleWalletReady();
+    } else {
+        window.addEventListener('solana#initialized', handleWalletReady, { once: true });
     }
 
     // Pozovi ovo KAD SPOJIŠ PHANTOM (vidi korak niže)
     async function afterWalletConnected(pubkey){
       userPubkey = pubkey;
+      colorStatus.textContent = 'checking status…';
       try {
         const { data } = await getPassStatus({ userPubkey });
         passActive = !!data.active;
@@ -437,7 +457,36 @@
         console.log('[whispr] getPassStatus:', data);
       } catch (e) {
         console.error('[whispr] getPassStatus error:', e);
+        colorStatus.textContent = 'status check failed';
       }
+    }
+
+    // ✅ ADD: Handler for the new "Check Status" button
+    async function onCheckStatusClick() {
+        const provider = window.solana;
+        if (!provider?.isPhantom) {
+            alert('Phantom wallet not installed.');
+            return;
+        }
+
+        // Connect if not already connected
+        if (!provider.publicKey) {
+            try {
+                // Try to connect without a popup first, good for returning users
+                await provider.connect({ onlyIfTrusted: true });
+            } catch (err) {
+                // If it fails, it means user needs to approve.
+                // We can prompt them to click the main button which handles the full connection.
+                colorStatus.textContent = 'please connect wallet first';
+                return;
+            }
+        }
+        
+        if (provider.publicKey) {
+            await afterWalletConnected(provider.publicKey.toString());
+        } else {
+            colorStatus.textContent = 'connect wallet first';
+        }
     }
 
     // Klik na tvoj gumb "✨ Get colored whispers — 0.01 SOL / 24 h"
@@ -456,10 +505,12 @@
         if (!provider.publicKey) {
           const resp = await provider.connect();
           userPubkey = resp.publicKey.toString();
+          // After connecting, check their status once before trying to pay
+          await afterWalletConnected(userPubkey);
         } else {
           userPubkey = provider.publicKey.toString();
         }
-
+        
         // ✅ ADD: If the pass is already active, don't make them pay again.
         if (passActive && passUntil > Date.now()) {
             colorStatus.textContent = '✅ color already active!';
@@ -531,6 +582,7 @@
 
     // Uveži handler na gumb
     colorBtn?.addEventListener('click', onColorBtnClick);
+    checkStatusBtn?.addEventListener('click', onCheckStatusClick); // New event listener
 
     // 3) DOM elementi
     const layer  = document.querySelector('.whispers');
@@ -638,6 +690,8 @@
 </body>
 
 </html>
+
+
 
 
 
