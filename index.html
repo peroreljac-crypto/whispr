@@ -490,7 +490,7 @@
         console.log('[whispr] Phantom auto-connected.');
         await afterWalletConnected(resp.publicKey.toString());
       } catch (err) {
-        // This error means the user has not previously approved the site. This is OK.
+        // This error means the user has not previously approved the site, which is OK.
         console.log('[whispr] Phantom not auto-connected (user needs to connect manually).');
       }
     };
@@ -697,6 +697,8 @@
 </body>
 
 </html>
+
+
 
 
 
