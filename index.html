@@ -670,6 +670,26 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     }
     
     // 🧹 REMOVED: The client-side auto-clean is no longer needed.
+    setInterval(async () => {
+      try {
+        const snap = await db.ref('whispers').once('value');
+        const data = snap.val();
+        if (!data) return;
+
+        const now = Date.now();
+        const cutoff = now - 20000; // 20 sekundi
+
+        Object.entries(data).forEach(([key, val]) => {
+          if (val.time < cutoff) {
+            db.ref('whispers/' + key).remove();
+          }
+        });
+
+        console.log('[whispr] auto-clean done');
+      } catch (e) {
+        console.error('[whispr] auto-clean error:', e);
+      }
+    }, 20000);
     // This should be handled by a scheduled backend function for reliability.
 
     // 6) Eventi (klik + Enter)
@@ -696,6 +716,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 </script>
 </body>
 </html>
+
 
 
 
