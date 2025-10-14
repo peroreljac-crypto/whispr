@@ -491,7 +491,7 @@
           console.log('[whispr] Phantom wallet not connected on load.');
           updateAllUIs(); // Ažuriraj UI za nepovezanog korisnika
         }
-        // Slušaj promjene računa (npr. korisnik se odspoji)
+        // Slušaj promjene računa (npr. korisnik se odspoji ili promijeni račun)
         provider.on('disconnect', () => {
             console.log('[whispr] Wallet disconnected.');
             userPubkey = null;
@@ -501,6 +501,11 @@
             if (newPublicKey) {
                 console.log('[whispr] Wallet account changed.');
                 afterWalletConnected(newPublicKey.toString());
+            } else {
+                // This can happen if they disconnect from within Phantom
+                console.log('[whispr] Wallet disconnected via accountChanged.');
+                userPubkey = null;
+                updateAllUIs();
             }
         });
       }
@@ -662,11 +667,33 @@
             updateAllUIs(); // Vrati gumbe u ispravno stanje
         }
     }
+    
+    // ✅ FIX: Jedinstvena funkcija za provjeru statusa
+    async function onCheckAnyStatusClick() {
+      const provider = window.solana;
+      if (!provider?.isPhantom) {
+        alert('Phantom wallet not installed.');
+        return;
+      }
+      try {
+        if (!provider.publicKey) {
+          await provider.connect();
+          // `afterWalletConnected` će biti pozvan automatski preko event listenera
+        } else {
+          // Ako je već spojen, samo osvježi
+          await refreshAllStatuses();
+        }
+      } catch (err) {
+        console.error('Failed to connect wallet for status check', err);
+        colorStatus.textContent = 'wallet connection failed';
+        aiStatus.textContent = 'wallet connection failed';
+      }
+    }
 
     colorBtn.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyPayment, colorStatus));
     aiSubButton.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyAiSubscription, aiSubStatus));
-    checkStatusBtn.addEventListener('click', refreshAllStatuses);
-    checkAiStatusBtn.addEventListener('click', refreshAllStatuses);
+    checkStatusBtn.addEventListener('click', onCheckAnyStatusClick);
+    checkAiStatusBtn.addEventListener('click', onCheckAnyStatusClick);
 
     // --- WhisprBot AI Logic ---
     function addMessageToChat(message, type) {
@@ -788,6 +815,8 @@
 </script>
 </body>
 </html>
+
+
 
 
 
