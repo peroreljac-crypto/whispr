@@ -567,22 +567,22 @@
         colorBtn.disabled = true;
       } else {
         passActive = false;
-        colorStatus.textContent = userPubkey ? 'no color active' : 'connect wallet first';
-        colorBtn.disabled = !userPubkey;
+        colorStatus.textContent = ''; // Clear status text
+        colorBtn.disabled = false; // Always enable the button
       }
-      checkStatusBtn.disabled = !userPubkey;
+      checkStatusBtn.disabled = false; // Always enable the button
     }
 
     function updateAiStatus() {
       const isConnected = !!userPubkey;
       aiConnectWalletBtn.disabled = isConnected;
       aiConnectWalletBtn.textContent = isConnected ? 'Wallet Connected' : 'Connect Wallet';
-      checkAiStatusBtn.disabled = !isConnected;
-      aiSubButton.disabled = !isConnected;
-      aiAskButton.disabled = !isConnected;
+      checkAiStatusBtn.disabled = false; // Always enable the button
 
       if (!isConnected) {
         aiStatus.textContent = 'connect wallet to begin...';
+        aiAskButton.disabled = true;
+        aiSubButton.disabled = false; // Always enable the button
         return;
       }
       
@@ -599,6 +599,7 @@
         aiSubStatus.textContent = '';
         aiAskButton.disabled = remaining <= 0;
         aiSubButton.textContent = 'Subscribe for unlimited answers — 0.01 SOL / month';
+        aiSubButton.disabled = false; // Always enable the button
         if (remaining <= 0) {
           aiStatus.textContent = 'Free limit reached. Subscribe for more.';
         }
@@ -619,6 +620,7 @@
                 if (!newKey) return;
             }
 
+            // Re-check status after potential connection
             if ((confirmationFn.name.includes('Ai') && aiSubActive) || (confirmationFn.name.includes('Payment') && passActive)) {
                 statusElement.textContent = '✅ Already active!';
                 updateAllUIs();
@@ -660,7 +662,6 @@
         }
     }
     
-    // ✅ FIX: Obje funkcije sada rade istu stvar
     async function refreshStatusesFromButton() {
         if (!userPubkey) {
             await connectWallet();
@@ -685,8 +686,12 @@
     }
 
     async function askBot() {
+      if (!userPubkey) {
+          const newKey = await connectWallet();
+          if (!newKey) return;
+      }
       const question = aiQuestionInput.value.trim();
-      if (!question || !userPubkey || aiAskButton.disabled) return;
+      if (!question || aiAskButton.disabled) return;
       addMessageToChat(`> ${question}`, 'user-q');
       aiQuestionInput.value = '';
       aiAskButton.disabled = true;
@@ -794,6 +799,8 @@
 </script>
 </body>
 </html>
+
+
 
 
 
