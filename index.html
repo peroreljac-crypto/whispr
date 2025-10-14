@@ -8,21 +8,21 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-   body {
-  margin: 0;
-  height: 100vh;
-  background: url('https://raw.githubusercontent.com/whisprcoin/whispr/refs/heads/main/5.png') no-repeat center center fixed;
-  background-size: cover;
-  color: #fff;
-  font-family: 'VT323', monospace;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  letter-spacing: 1px;
-  backdrop-filter: brightness(0.7) blur(1px);
-}
+    body {
+      margin: 0;
+      height: 100vh;
+      background: url('https://raw.githubusercontent.com/whisprcoin/whispr/refs/heads/main/5.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      font-family: 'VT323', monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      letter-spacing: 1px;
+      backdrop-filter: brightness(0.7) blur(1px);
+    }
     
     h1 {
       font-size: 80px;
@@ -62,6 +62,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      width: 100%;
     }
 
     a {
@@ -74,193 +75,170 @@
     a:hover {
       color: #ffffff;
     }
+
     .footer-links {
-  position: fixed;
-  bottom: 25px;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  z-index: 2;
-}
+      position: fixed;
+      bottom: 25px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 2;
+    }
 
-.footer-links a {
-  color: #9c9c9c;
-  text-decoration: none;
-  font-size: 20px;
-  margin: 0 15px;
-}
+    .footer-links a {
+      color: #9c9c9c;
+      text-decoration: none;
+      font-size: 20px;
+      margin: 0 15px;
+    }
 
-.footer-links a:hover {
-  color: #ffffff;
-}
+    .footer-links a:hover {
+      color: #ffffff;
+    }
+
     .whispers {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-.whispers span {
-  position: absolute;
-  color: rgba(255, 255, 255, 0.25); /* 🔥 jača vidljivost */
-  font-size: 20px; /* malo veći font */
-  font-family: 'VT323', monospace;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.1); /* lagani sjaj */
-  animation: whisperMove 15s linear infinite;
-  opacity: 0;
-}
+    .whispers span {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.25);
+      font-size: 20px;
+      font-family: 'VT323', monospace;
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
+      animation: whisperMove 15s linear infinite;
+      opacity: 0;
+    }
 
-@keyframes whisperMove {
-  0% { opacity: 0; transform: translateY(0); }
-  10% { opacity: 0.4; }
-  50% { opacity: 0.2; transform: translateY(-40px); }
-  90% { opacity: 0; }
-  100% { opacity: 0; transform: translateY(-80px); }
-}
-    /* ghost "shhh..." */
-.shhh-ghost{
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255,255,255,0.28);
-  font-family: 'VT323', monospace;
-  font-size: 32px;                 /* pojačaj/smanji po želji */
-  letter-spacing: 1px;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 6;                      /* iznad pozadine i whispers teksta */
-  text-shadow: 0 0 6px rgba(255,255,255,0.10);
-  transition: opacity 0.6s ease;
-}
-.shhh-ghost.show{ opacity: 1; }
+    @keyframes whisperMove {
+      0% { opacity: 0; transform: translateY(0); }
+      10% { opacity: 0.4; }
+      50% { opacity: 0.2; transform: translateY(-40px); }
+      90% { opacity: 0; }
+      100% { opacity: 0; transform: translateY(-80px); }
+    }
 
-      .whisper-box{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-top: 25px;
-  margin-bottom: 25px;
-  width: 100%;
-}
+    .shhh-ghost {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255,255,255,0.28);
+      font-family: 'VT323', monospace;
+      font-size: 32px;
+      letter-spacing: 1px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 6;
+      text-shadow: 0 0 6px rgba(255,255,255,0.10);
+      transition: opacity 0.6s ease;
+    }
+    .shhh-ghost.show { opacity: 1; }
 
-#whisperInput{
-  width: min(600px, 90vw);
-  padding: 10px 12px;
-  border: 1px solid #2a2a2a;
-  background: rgba(12,12,12,.8);
-  color: #eaeaea;
-  font-family: 'VT323', monospace;
-  font-size: 18px;
-  outline: none;
-  border-radius: 6px;
-  transition: border-color .2s ease, background .2s ease;
-}
-#whisperInput::placeholder{ color:#6f6f6f; }
+    .whisper-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 25px;
+      margin-bottom: 25px;
+      width: 100%;
+    }
 
-#whisperInput:focus{
-  border-color:#555;
-  background: rgba(18,18,18,.9);
-}
+    #whisperInput {
+      width: min(600px, 90vw);
+      padding: 10px 12px;
+      border: 1px solid #2a2a2a;
+      background: rgba(12,12,12,.8);
+      color: #eaeaea;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      outline: none;
+      border-radius: 6px;
+      transition: border-color .2s ease, background .2s ease;
+    }
+    #whisperInput::placeholder { color:#6f6f6f; }
+    #whisperInput:focus {
+      border-color:#555;
+      background: rgba(18,18,18,.9);
+    }
 
-#whisperSend{
-  padding: 10px 14px;
-  border: 1px solid #2a2a2a;
-  background: rgba(18,18,18,.85);
-  color:#cfcfcf;
-  font-family: 'VT323', monospace;
-  font-size:18px;
-  border-radius:6px;
-  cursor:pointer;
-  transition: transform .08s ease, background .2s ease, color .2s;
-}
-#whisperSend:hover{ background:#1b1b1b; color:#fff; }
-#whisperSend:active{ transform: translateY(1px); }
+    #whisperSend {
+      padding: 10px 14px;
+      border: 1px solid #2a2a2a;
+      background: rgba(18,18,18,.85);
+      color:#cfcfcf;
+      font-family: 'VT323', monospace;
+      font-size:18px;
+      border-radius:6px;
+      cursor:pointer;
+      transition: transform .08s ease, background .2s ease, color .2s;
+    }
+    #whisperSend:hover { background:#1b1b1b; color:#fff; }
+    #whisperSend:active { transform: translateY(1px); }
+    #whisperSend[disabled] { opacity:.6; cursor:not-allowed; }
 
-.whisper-note{
-  width: 100%;
-  text-align: center;
-  font-size: 14px;
-  color:#6f6f6f;
-  margin-top: 6px;
-  opacity:.8;
-}
+    .whisper-note {
+      width: 100%;
+      text-align: center;
+      font-size: 14px;
+      color:#6f6f6f;
+      margin-top: 6px;
+      opacity:.8;
+    }
 
-.whisper-status{
-  width:100%;
-  text-align:center;
-  font-size:16px;
-  color:#a8ffa8;
-  margin-top:8px;
-  min-height: 1em; /* da ne “skače” layout */
-  visibility: hidden;
-}
-.whisper-status.show{ visibility: visible; }
+    .whisper-status {
+      width:100%;
+      text-align:center;
+      font-size:16px;
+      color:#a8ffa8;
+      margin-top:8px;
+      min-height: 1em;
+      visibility: hidden;
+    }
+    .whisper-status.show { visibility: visible; }
 
-.user-whisper {
-  color: rgba(255, 255, 255, 0.65) !important; /* jače vidljiv */
-  text-shadow: 0 0 8px rgba(255,255,255,0.15);
-  font-size: 22px !important;
-  letter-spacing: 1px;
-}
     .content small {
-  display: block;
-  margin-top: 10px;
-  font-size: 18px;
-  color: rgba(255,255,255,0.65);
-}
+      display: block;
+      margin-top: 10px;
+      font-size: 18px;
+      color: rgba(255,255,255,0.65);
+    }
 
-    .wallet-row{
-  margin-top:10px;
-  display:flex; gap:10px; align-items:center; justify-content:center;
-  opacity:.9;
-}
-#walletStatus{ color:#9c9c9c; font-size:14px; }
+    .color-row {
+      margin-top:10px;
+      display:flex; gap:10px; align-items:center; justify-content:center;
+      color:#cfcfcf;
+    }
+    #colorWhisperBtn {
+      padding:6px 10px;
+      border-radius:6px;
+      background:linear-gradient(90deg,#111,#222);
+      color:#fff;
+      border:1px solid rgba(255,255,255,0.06);
+      font-family:'VT323', monospace;
+      cursor: pointer;
+    }
+    #colorWhisperBtn[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: #222;
+    }
+    #colorStatus { font-size:13px; color:#9c9c9c; }
+    #checkStatusBtn {
+      padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer;
+    }
+    #checkStatusBtn:hover { background: #333; color: #fff; }
+    #checkStatusBtn[disabled] { opacity: 0.6; cursor: not-allowed; }
 
-.admin-bar{
-  margin-top:10px;
-  display:flex; gap:10px; align-items:center; justify-content:center;
-  font-size:14px; color:#bbb;
-}
-#toggleMode{
-  padding:6px 10px; font-family:'VT323', monospace;
-  border:1px solid #2a2a2a; background:#0b0b0b; color:#fff; border-radius:6px;
-}
-
-/* zaključan UI */
-#whisperInput[disabled]{ opacity:.6; cursor:not-allowed; }
-#whisperSend[disabled]{ opacity:.6; cursor:not-allowed; }
-    .color-row{
-  margin-top:10px;
-  display:flex; gap:10px; align-items:center; justify-content:center;
-  color:#cfcfcf;
-}
-#colorWhisperBtn{
-  padding:6px 10px;
-  border-radius:6px;
-  background:linear-gradient(90deg,#111,#222);
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.06);
-  font-family:'VT323', monospace;
-  cursor: pointer;
-}
-#colorWhisperBtn[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background: #222;
-}
-#colorStatus{ font-size:13px; color:#9c9c9c; }
-  #checkStatusBtn {
-    padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer;
-  }
-  #checkStatusBtn:hover { background: #333; color: #fff; }
-
-    /* === NOVI STILOVI ZA WHISPRBOT === */
+    /* === STILOVI ZA WHISPRBOT === */
     .hidden { display: none !important; }
     #showAiBtn {
         margin-top: 20px;
@@ -298,16 +276,17 @@
     #aiQuestionInput:focus { outline: none; border-color: #555; }
     #aiAskButton { padding: 8px 12px; background: #222; border: 1px solid #333; color: #bbb; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; font-size: 16px; }
     #aiAskButton:hover:not(:disabled) { background: #333; color: #fff; }
-    #aiAskButton:disabled { opacity: 0.5; cursor: not-allowed; }
+    #aiAskButton[disabled] { opacity: 0.5; cursor: not-allowed; }
 
     .ai-status-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 10px; }
     #aiStatus { font-size: 14px; color: #777; min-height: 1em; flex-grow: 1; text-align: left; }
     .check-status-btn { padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer; flex-shrink: 0; }
     .check-status-btn:hover { background: #333; color: #fff; }
+    .check-status-btn[disabled] { opacity: 0.6; cursor: not-allowed; }
 
     .ai-sub-row { margin-top: 15px; text-align: center; }
     #aiSubButton { width: 100%; padding: 8px; font-size: 14px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b); border: 1px solid #444; color: #a8ffa8; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; }
-    #aiSubButton:disabled { opacity: 0.5; cursor: not-allowed; }
+    #aiSubButton[disabled] { opacity: 0.5; cursor: not-allowed; }
     #aiSubStatus { font-size: 13px; color: #9c9c9c; display: block; margin-top: 6px; min-height: 1em; }
   </style>
 </head>
@@ -337,7 +316,7 @@
       
       <div class="color-row">
         <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
-        <span id="colorStatus">no color active</span>
+        <span id="colorStatus"></span>
       </div>
       
       <div class="color-row" style="margin-top: 8px; gap: 8px;">
@@ -363,7 +342,7 @@
           <button id="aiAskButton">ask</button>
         </div>
         <div class="ai-status-row">
-          <span id="aiStatus" class="ai-status">connect wallet to begin...</span>
+          <span id="aiStatus" class="ai-status"></span>
           <button id="checkAiStatusBtn" class="check-status-btn">Check Status</button>
         </div>
         <div class="ai-sub-row">
@@ -381,75 +360,61 @@
   </div>
 
   <script>
-  const whispers = document.querySelectorAll('.whispers span');
-  function randomizeWhispers() {
-    whispers.forEach(w => {
-      w.style.top = Math.random() * 100 + '%';
-      w.style.left = Math.random() * 100 + '%';
-      w.style.animationDelay = (Math.random() * 10) + 's';
-    });
-  }
-  randomizeWhispers();
-  setInterval(randomizeWhispers, 15000);
+  // --- Animirani elementi (bez promjena) ---
+  (function() {
+    const whispers = document.querySelectorAll('.whispers span');
+    function randomizeWhispers() {
+      whispers.forEach(w => {
+        w.style.top = Math.random() * 100 + '%';
+        w.style.left = Math.random() * 100 + '%';
+        w.style.animationDelay = (Math.random() * 10) + 's';
+      });
+    }
+    randomizeWhispers();
+    setInterval(randomizeWhispers, 15000);
+
+    function spawnShhh(){
+      const old = document.querySelector('.shhh-ghost');
+      if (old) old.remove();
+      const s = document.createElement('div');
+      s.className = 'shhh-ghost';
+      s.textContent = 'shhh...';
+      document.body.appendChild(s);
+      requestAnimationFrame(() => s.classList.add('show'));
+      setTimeout(() => {
+        s.classList.remove('show');
+        setTimeout(() => s.remove(), 600);
+      }, 1400);
+    }
+    const titleEl = document.querySelector('#main-content h1');
+    if (titleEl){
+      titleEl.addEventListener('mouseenter', spawnShhh);
+      titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
+    }
+  })();
 </script>
-   <script>
-  // kreira i prikaže "shhh..." pa ga makne
-  function spawnShhh(){
-    // makni postojeći ako već traje (spriječi spam)
-    const old = document.querySelector('.shhh-ghost');
-    if (old) old.remove();
 
-    const s = document.createElement('div');
-    s.className = 'shhh-ghost';
-    s.textContent = 'shhh...';
-    document.body.appendChild(s);
-
-    // fade in
-    requestAnimationFrame(() => s.classList.add('show'));
-
-    // nakon 1.4s počni gasiti, pa ukloni
-    setTimeout(() => {
-      s.classList.remove('show');
-      setTimeout(() => s.remove(), 600);
-    }, 1400);
-  }
-
-  // ciljaj H1 unutar .content (tvoj "whispr")
-  const titleEl = document.querySelector('.content h1');
-
-  if (titleEl){
-    // hover na desktopu
-    titleEl.addEventListener('mouseenter', spawnShhh);
-    // tap na mobitelu
-    titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
-  }
-</script>
-<!-- Firebase SDK (compat) -->
+<!-- Firebase & Solana SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
-
-<!-- Buffer polyfill -->
 <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
-
-<!-- ✅ OVAJ NOVI FAJL MORA BITI IZMEĐU buffer.min.js i web3.js -->
 <script src="./buffer-shim.js?v=1.0.1"></script>
-
-<!-- Solana web3 IIFE (nakon buffer-setup.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous"></script>
- <script>
- // ✅ ADD: Lightweight profanity filter library
-const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this.regex=/@|\$|\\|\*/g,this.replaceRegex=/\w/g}return e.prototype.isProfane=function(e){for(var t=0;t<this.list.length;t++)if(new RegExp("\\b"+this.list[t].replace(/(\W)/g,"\\$1")+"\\b","gi").test(e))return!0;return!1},e.prototype.replaceWord=function(e){return e.replace(this.regex,"").replace(this.replaceRegex,this.placeHolder)},e.prototype.clean=function(e){return e.split(" ").map(function(e){return this.isProfane(e)?this.replaceWord(e):e}.bind(this)).join(" ")},e.prototype.addWords=function(){var e=Array.from(arguments);this.list=this.list.concat(e)},e.prototype.removeWords=function(){for(var e=Array.from(arguments),t=0;t<e.length;t++)for(var r=e[t],i=this.list.length-1;i>=0;i--)this.list[i]===r&&this.list.splice(i,1)},e})();
 
+<script>
+// --- Glavna skripta aplikacije ---
 (function(){
   console.log('[whispr] boot');
 
-  // 1) Init kad se sve učita (da elementi postoje)
+  // Lightweight profanity filter
+  const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this.regex=/@|\$|\\|\*/g,this.replaceRegex=/\w/g}return e.prototype.isProfane=function(e){for(var t=0;t<this.list.length;t++)if(new RegExp("\\b"+this.list[t].replace(/(\W)/g,"\\$1")+"\\b","gi").test(e))return!0;return!1},e.prototype.replaceWord=function(e){return e.replace(this.regex,"").replace(this.replaceRegex,this.placeHolder)},e.prototype.clean=function(e){return e.split(" ").map(function(e){return this.isProfane(e)?this.replaceWord(e):e}.bind(this)).join(" ")},e.prototype.addWords=function(){var e=Array.from(arguments);this.list=this.list.concat(e)},e.prototype.removeWords=function(){for(var e=Array.from(arguments),t=0;t<e.length;t++)for(var r=e[t],i=this.list.length-1;i>=0;i--)this.list[i]===r&&this.list.splice(i,1)},e})();
+
   window.addEventListener('load', function(){
     console.log('[whispr] dom ready');
 
-    // 2) Firebase config
-    const cfg = {
+    // --- Firebase & Cloud Functions Setup ---
+    const firebaseConfig = {
       apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
       authDomain: "whisprcoin.firebaseapp.com",
       databaseURL: "https://whisprcoin-default-rtdb.europe-west1.firebasedatabase.app",
@@ -459,29 +424,25 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       appId: "1:1063673504189:web:938b00b8a6871b0a5db2d4",
       measurementId: "G-ZYWYEXVG4F"
     };
-
-    if (!window.firebase) { console.error('[whispr] Firebase SDK nije učitan'); return; }
-    if (!firebase.apps.length) { firebase.initializeApp(cfg); console.log('[whispr] firebase init OK'); }
+    if (!window.firebase || !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
-
-    // === Cloud Functions (us-central1) ===
     const fns = firebase.app().functions('us-central1');
-    const getPassStatus   = fns.httpsCallable('getPassStatus');
+    const getPassStatus = fns.httpsCallable('getPassStatus');
     const getBlockhash = fns.httpsCallable('getBlockhash');
-    const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
     const sendWhisperFn = fns.httpsCallable('sendWhisper');
-    // NOVO: Funkcije za AI Bota
+    const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
     const askWhisprBotFn = fns.httpsCallable('askWhisprBot');
     const confirmAndVerifyAiSubscription = fns.httpsCallable('confirmAndVerifyAiSubscription');
 
-
-    // === UI elementi ===
+    // --- UI Elementi ---
     const mainContent = document.getElementById('main-content');
     const aiContent = document.getElementById('ai-content');
     const showAiBtn = document.getElementById('showAiBtn');
     const hideAiBtn = document.getElementById('hideAiBtn');
     
-    const colorBtn    = document.getElementById('colorWhisperBtn');
+    const colorBtn = document.getElementById('colorWhisperBtn');
     const colorStatus = document.getElementById('colorStatus');
     const checkStatusBtn = document.getElementById('checkStatusBtn');
 
@@ -493,8 +454,12 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     const aiSubStatus = document.getElementById('aiSubStatus');
     const checkAiStatusBtn = document.getElementById('checkAiStatusBtn');
 
+    const whisperInput = document.getElementById('whisperInput');
+    const whisperSendBtn = document.getElementById('whisperSend');
+    const whisperStatus = document.getElementById('whisperStatus');
+    const whispersLayer = document.querySelector('.whispers');
 
-    // === Globalno stanje ===
+    // --- Globalno stanje ---
     let userPubkey = null;
     let passActive = false;
     let passUntil  = 0;
@@ -503,8 +468,9 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     let freeMessagesUsed = 0;
     const AI_FREE_MESSAGE_LIMIT = 5;
     const profanityFilter = new Filter();
+    // profanityFilter.addWords('neka', 'ružna', 'riječ');
 
-    // === UI Toggling (Prikazivanje/skrivanje AI chata) ===
+    // --- UI Toggling ---
     showAiBtn.addEventListener('click', () => {
       mainContent.classList.add('hidden');
       aiContent.classList.remove('hidden');
@@ -514,208 +480,111 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       mainContent.classList.remove('hidden');
     });
 
-    function renderColorStatus() {
-      if (!colorStatus) return;
-      if (passActive && passUntil > Date.now()) {
-        const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
-        colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
-      } else {
-        passActive = false; // Ensure pass is marked as inactive if time is up
-        colorStatus.textContent = 'no color active';
-      }
-    }
-
+    // --- Wallet & Status Management ---
     const handleWalletReady = () => {
-        const provider = window.solana;
-        if (provider?.isPhantom && provider.publicKey) {
-            console.log('[whispr] Phantom wallet is already connected.');
-            afterWalletConnected(provider.publicKey.toString());
+      const provider = window.solana;
+      if (provider?.isPhantom) {
+        if (provider.publicKey) {
+          console.log('[whispr] Phantom wallet is already connected.');
+          afterWalletConnected(provider.publicKey.toString());
         } else {
-            console.log('[whispr] Phantom wallet not connected on load.');
-            updateAiStatus(); // Ažuriraj AI status i za nepovezanog korisnika
+          console.log('[whispr] Phantom wallet not connected on load.');
+          updateAllUIs(); // Ažuriraj UI za nepovezanog korisnika
         }
+        // Slušaj promjene računa (npr. korisnik se odspoji)
+        provider.on('disconnect', () => {
+            console.log('[whispr] Wallet disconnected.');
+            userPubkey = null;
+            updateAllUIs();
+        });
+        provider.on('accountChanged', (newPublicKey) => {
+            if (newPublicKey) {
+                console.log('[whispr] Wallet account changed.');
+                afterWalletConnected(newPublicKey.toString());
+            }
+        });
+      }
     };
 
     if (window.solana?.isPhantom) {
-        handleWalletReady();
+      handleWalletReady();
     } else {
-        window.addEventListener('solana#initialized', handleWalletReady, { once: true });
+      window.addEventListener('solana#initialized', handleWalletReady, { once: true });
     }
 
-    async function afterWalletConnected(pubkey){
+    async function afterWalletConnected(pubkey) {
+      if (userPubkey === pubkey) return; // Ne radi ništa ako je isti wallet
       userPubkey = pubkey;
-      // Pozovi funkciju koja ažurira SVE statuse
-      await refreshAllStatuses(pubkey);
+      await refreshAllStatuses();
     }
 
-    // ✅ NOVO: Funkcija koja dohvaća i postavlja SVE statuse
-    async function refreshAllStatuses(pubkey) {
-      colorStatus.textContent = 'checking status…';
-      aiStatus.textContent = 'checking status...';
-      checkStatusBtn.disabled = true;
-      checkAiStatusBtn.disabled = true;
+    async function refreshAllStatuses() {
+      if (!userPubkey) {
+        updateAllUIs();
+        return;
+      }
+      setLoadingState(true);
       try {
-        const { data } = await getPassStatus({ userPubkey: pubkey });
+        const { data } = await getPassStatus({ userPubkey });
+        if (!data.ok) throw new Error(data.reason || 'Status check failed');
+        
         console.log('[whispr] getPassStatus response:', data);
-
         passActive = !!data.colorPass?.active;
         passUntil  = data.colorPass?.active_until || 0;
-        renderColorStatus();
-
         aiSubActive = !!data.aiSub?.active;
         aiSubUntil = data.aiSub?.active_until || 0;
         freeMessagesUsed = data.aiSub?.free_messages_used || 0;
-        updateAiStatus();
-
       } catch (e) {
         console.error('[whispr] getPassStatus error:', e);
         colorStatus.textContent = 'status check failed';
         aiStatus.textContent = 'status check failed';
+        // Resetiraj stanje u slučaju greške
+        passActive = false;
+        aiSubActive = false;
       } finally {
-        checkStatusBtn.disabled = false;
-        checkAiStatusBtn.disabled = false;
+        setLoadingState(false);
+        updateAllUIs();
       }
     }
 
-    async function onCheckStatusClick() {
-        const provider = window.solana;
-        if (!provider?.isPhantom) {
-            alert('Phantom wallet not installed.');
-            return;
-        }
-        if (!provider.publicKey) {
-            try {
-                await provider.connect({ onlyIfTrusted: true });
-                // Nakon spajanja, SVI statusi se provjeravaju kroz afterWalletConnected
-            } catch (err) {
-                colorStatus.textContent = 'please connect wallet first';
-                return;
-            }
-        }
-        // Ako je novčanik već spojen, samo osvježi sve
-        await refreshAllStatuses(provider.publicKey.toString());
+    function setLoadingState(isLoading) {
+        const statusText = isLoading ? 'checking status...' : '';
+        colorStatus.textContent = statusText;
+        aiStatus.textContent = statusText;
+        checkStatusBtn.disabled = isLoading;
+        checkAiStatusBtn.disabled = isLoading;
+        colorBtn.disabled = isLoading;
+        aiSubButton.disabled = isLoading;
     }
 
-    async function onCheckAiStatusClick() {
-        const provider = window.solana;
-        if (!provider?.isPhantom) {
-            alert('Phantom wallet not installed.');
-            return;
-        }
-        if (!provider.publicKey) {
-            try {
-                const resp = await provider.connect();
-                // afterWalletConnected će se pozvati automatski i osvježiti sve
-            } catch (err) {
-                aiStatus.textContent = 'connect wallet to check status';
-            }
-        } else {
-            // Ako je novčanik već spojen, samo osvježi sve
-            await refreshAllStatuses(provider.publicKey.toString());
-        }
+    function updateAllUIs() {
+        renderColorStatus();
+        updateAiStatus();
     }
 
-    async function onColorBtnClick() {
-      const provider = window.solana;
-      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
-      const PRICE_SOL = 0.01;
-
-      if (!provider?.isPhantom) { alert('Phantom wallet nije instaliran.'); return; }
-      if (!window.solanaWeb3)   { alert('Solana web3 nije učitan (hard refresh).'); return; }
-
-      try {
+    // --- UI Update Functions ---
+    function renderColorStatus() {
+      if (passActive && passUntil > Date.now()) {
+        const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
+        colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
         colorBtn.disabled = true;
-        if (!provider.publicKey) {
-          const resp = await provider.connect();
-          userPubkey = resp.publicKey.toString();
-          await afterWalletConnected(userPubkey);
-        } else {
-          userPubkey = provider.publicKey.toString();
-        }
-        
-        if (passActive && passUntil > Date.now()) {
-            colorStatus.textContent = '✅ color already active!';
-            setTimeout(() => { colorBtn.disabled = false; renderColorStatus(); }, 1500);
-            return;
-        }
-
-        colorStatus.textContent = 'getting blockhash…';
-        const bh = await getBlockhash();
-        const blockhash = bh?.data?.blockhash;
-        const lastValidBlockHeight = bh?.data?.lastValidBlockHeight;
-        if (!blockhash || !lastValidBlockHeight) {
-          throw new Error('No blockhash from backend');
-        }
-
-        colorStatus.textContent = 'opening Phantom…';
-        const fromPubkey = provider.publicKey;
-        const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
-        const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
-
-        if (window.buffer?.Buffer) {
-          window.Buffer = window.buffer.Buffer;
-          globalThis.Buffer = window.buffer.Buffer;
-        }
-        if (typeof Buffer.from !== 'function' && window.buffer?.Buffer?.from) {
-          Buffer.from = window.buffer.Buffer.from.bind(window.buffer.Buffer);
-        }
-        
-        const tx = new window.solanaWeb3.Transaction({
-          feePayer: fromPubkey,
-          recentBlockhash: blockhash,
-        }).add(
-          window.solanaWeb3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
-        );
-
-        colorStatus.textContent = 'awaiting approval in Phantom…';
-        const { signature } = await provider.signAndSendTransaction(tx);
-        
-        colorStatus.textContent = 'confirming and verifying…';
-        const { data } = await confirmAndVerifyPayment({
-          userPubkey,
-          signature,
-          blockhash,
-          lastValidBlockHeight
-        });
-
-        if (data?.ok) {
-          passActive = true;
-          passUntil  = data.active_until || 0;
-          renderColorStatus();
-        } else {
-          colorStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
-        }
-        colorBtn.disabled = false;
-      } catch (e) {
-        console.error('Payment error:', e);
-        colorStatus.textContent = '❌ cancelled or failed';
+      } else {
+        passActive = false;
+        colorStatus.textContent = userPubkey ? 'no color active' : 'connect wallet';
         colorBtn.disabled = false;
       }
-    }
-
-    colorBtn?.addEventListener('click', onColorBtnClick);
-    checkStatusBtn?.addEventListener('click', onCheckStatusClick);
-    checkAiStatusBtn?.addEventListener('click', onCheckAiStatusClick);
-
-    // === WhisprBot AI Logika ===
-    function addMessageToChat(message, type) {
-      if (!aiChatHistory) return;
-      const p = document.createElement('p');
-      p.textContent = message;
-      p.className = type;
-      aiChatHistory.appendChild(p);
-      aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
     }
 
     function updateAiStatus() {
       if (!userPubkey) {
         aiStatus.textContent = 'connect wallet to begin...';
         aiAskButton.disabled = true;
-        aiSubButton.disabled = true;
+        aiSubButton.disabled = false; // Omogući da korisnik može kliknuti za spajanje
+        aiSubButton.textContent = 'Connect Wallet & Subscribe — 0.01 SOL / month';
         checkAiStatusBtn.classList.remove('hidden');
         return;
       }
-      aiSubButton.disabled = false;
+      
       if (aiSubActive) {
         const daysLeft = Math.ceil((aiSubUntil - Date.now()) / (1000 * 60 * 60 * 24));
         aiStatus.textContent = `Subscribed! Unlimited questions. (~${daysLeft} days left)`;
@@ -729,12 +598,83 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         aiStatus.textContent = `You have ${remaining} free questions remaining.`;
         aiSubStatus.textContent = '';
         aiAskButton.disabled = remaining <= 0;
+        aiSubButton.disabled = false;
         aiSubButton.textContent = 'Subscribe for unlimited answers — 0.01 SOL / month';
         if (remaining <= 0) {
           aiStatus.textContent = 'Free limit reached. Subscribe for more.';
         }
         checkAiStatusBtn.classList.remove('hidden');
       }
+    }
+
+    // --- Payment & Action Handlers ---
+    async function handlePayment(price, confirmationFn, statusElement) {
+        const provider = window.solana;
+        const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
+
+        if (!provider?.isPhantom) { alert('Phantom wallet is not installed.'); return; }
+        if (!window.solanaWeb3) { alert('Solana web3 is not loaded (hard refresh).'); return; }
+
+        try {
+            if (!provider.publicKey) {
+                const resp = await provider.connect();
+                // Event listener će automatski pozvati afterWalletConnected
+            }
+            // Nakon spajanja, userPubkey je postavljen, a statusi osvježeni.
+            // Ponovno provjeravamo da ne platimo duplo.
+            if ((confirmationFn.name.includes('Ai') && aiSubActive) || (confirmationFn.name.includes('Payment') && passActive)) {
+                statusElement.textContent = '✅ Already active!';
+                updateAllUIs();
+                return;
+            }
+
+            statusElement.textContent = 'getting blockhash…';
+            const bh = await getBlockhash();
+            const { blockhash, lastValidBlockHeight } = bh?.data;
+            if (!blockhash || !lastValidBlockHeight) throw new Error('No blockhash from backend');
+
+            statusElement.textContent = 'opening Phantom…';
+            const tx = new window.solanaWeb3.Transaction({
+                feePayer: provider.publicKey,
+                recentBlockhash: blockhash,
+            }).add(
+                window.solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: provider.publicKey,
+                    toPubkey: new window.solanaWeb3.PublicKey(MERCHANT),
+                    lamports: Math.round(price * 1_000_000_000)
+                })
+            );
+
+            statusElement.textContent = 'awaiting approval…';
+            const { signature } = await provider.signAndSendTransaction(tx);
+            
+            statusElement.textContent = 'confirming…';
+            const { data } = await confirmationFn({ userPubkey, signature, blockhash, lastValidBlockHeight });
+
+            if (data?.ok) {
+                await refreshAllStatuses(); // Najpouzdaniji način za update UI
+            } else {
+                throw new Error(data?.reason || 'verification failed');
+            }
+        } catch (e) {
+            console.error('Payment error:', e);
+            statusElement.textContent = `❌ ${e.message.includes('User rejected') ? 'cancelled' : 'failed'}`;
+            updateAllUIs(); // Vrati gumbe u ispravno stanje
+        }
+    }
+
+    colorBtn.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyPayment, colorStatus));
+    aiSubButton.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyAiSubscription, aiSubStatus));
+    checkStatusBtn.addEventListener('click', refreshAllStatuses);
+    checkAiStatusBtn.addEventListener('click', refreshAllStatuses);
+
+    // --- WhisprBot AI Logic ---
+    function addMessageToChat(message, type) {
+      const p = document.createElement('p');
+      p.textContent = message;
+      p.className = type;
+      aiChatHistory.appendChild(p);
+      aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
     }
 
     async function askBot() {
@@ -748,10 +688,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         const { data } = await askWhisprBotFn({ question, userPubkey });
         if (data.ok) {
           addMessageToChat(data.answer, 'bot-a');
-          if (!aiSubActive) {
-            // Ažuriraj lokalno, ali stvarni izvor istine je backend
-            freeMessagesUsed++;
-          }
+          if (!aiSubActive) freeMessagesUsed++; // Optimistično ažuriranje
         } else {
           addMessageToChat(`... ${data.reason || 'an error occurred'} ...`, 'bot-a');
         }
@@ -759,174 +696,90 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         console.error('[whispr] askBot error:', e);
         addMessageToChat(`... ${e.message || 'the static is too loud...'}`, 'bot-a');
       } finally {
-        updateAiStatus();
+        updateAiStatus(); // Ažuriraj brojač i stanje gumba
       }
     }
     
     addMessageToChat('...i am listening...', 'bot-a');
-    updateAiStatus();
+    aiAskButton.addEventListener('click', askBot);
+    aiQuestionInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); askBot(); } });
 
-    aiAskButton?.addEventListener('click', askBot);
-    aiQuestionInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); askBot(); } });
-
-    async function onAiSubClick() {
-      const provider = window.solana;
-      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
-      const PRICE_SOL = 0.01;
-
-      if (!provider?.isPhantom) { alert('Phantom wallet nije instaliran.'); return; }
-      if (!window.solanaWeb3)   { alert('Solana web3 nije učitan (hard refresh).'); return; }
-
-      try {
-        aiSubButton.disabled = true;
-        if (!provider.publicKey) {
-          const resp = await provider.connect();
-          userPubkey = resp.publicKey.toString();
-          await afterWalletConnected(userPubkey);
-        } else {
-          userPubkey = provider.publicKey.toString();
-        }
-        
-        if (aiSubActive) {
-          aiSubStatus.textContent = 'You are already subscribed.';
-          return;
-        }
-
-        aiSubStatus.textContent = 'getting blockhash…';
-        const bh = await getBlockhash();
-        const blockhash = bh?.data?.blockhash;
-        const lastValidBlockHeight = bh?.data?.lastValidBlockHeight;
-        if (!blockhash || !lastValidBlockHeight) throw new Error('No blockhash from backend');
-
-        aiSubStatus.textContent = 'opening Phantom…';
-        const fromPubkey = provider.publicKey;
-        const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
-        const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
-        
-        const tx = new window.solanaWeb3.Transaction({
-          feePayer: fromPubkey,
-          recentBlockhash: blockhash,
-        }).add(
-          window.solanaWeb3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
-        );
-
-        aiSubStatus.textContent = 'awaiting approval in Phantom…';
-        const { signature } = await provider.signAndSendTransaction(tx);
-        
-        aiSubStatus.textContent = 'confirming and verifying…';
-        const { data } = await confirmAndVerifyAiSubscription({
-          userPubkey,
-          signature,
-          blockhash,
-          lastValidBlockHeight
-        });
-
-        if (data?.ok) {
-          aiSubActive = true;
-          aiSubUntil  = data.active_until || 0;
-          updateAiStatus();
-        } else {
-          aiSubStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
-        }
-      } catch (e) {
-        console.error('AI Sub Payment error:', e);
-        aiSubStatus.textContent = '❌ cancelled or failed';
-      } finally {
-        aiSubButton.disabled = aiSubActive;
-      }
-    }
-    aiSubButton?.addEventListener('click', onAiSubClick);
-
-    // === Logika za slanje Whispera ===
-    const layer  = document.querySelector('.whispers');
-    const input  = document.getElementById('whisperInput');
-    const button = document.getElementById('whisperSend');
-    const status = document.getElementById('whisperStatus');
-
+    // --- Whisper Sending Logic ---
     function floatWhisper(text, strong, colored = false){
-      if (!layer) return;
       const s = document.createElement('span');
       s.textContent = text;
       s.style.position = 'absolute';
       s.style.top  = (10 + Math.random()*80) + '%';
       s.style.left = (5 + Math.random()*90) + '%';
-      s.style.setProperty('--whisper-glow-color', colored ? '#a8ffa8' : 'rgba(255,255,255,0.1)');
       s.style.color = colored ? '#a8ffa8' : (strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)');
-      s.style.textShadow = '0 0 10px var(--whisper-glow-color)';
+      s.style.textShadow = `0 0 10px ${colored ? '#a8ffa8' : 'rgba(255,255,255,0.1)'}`;
       s.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
       s.style.animation = 'whisperMove 12s linear 1';
       s.style.opacity = '0';
-      layer.appendChild(s);
+      whispersLayer.appendChild(s);
       setTimeout(()=>s.remove(), 12000);
     }
 
     async function sendWhisper(){
-      const text = (input.value || '').trim();
+      const text = (whisperInput.value || '').trim();
       if (!text) return;
 
       if (profanityFilter.isProfane(text)) {
-          status.textContent = '❌ inappropriate language';
-          status.classList.add('show');
-          setTimeout(() => {
-              status.classList.remove('show');
-              status.textContent = '';
-          }, 2500);
+          whisperStatus.textContent = '❌ inappropriate language';
+          whisperStatus.classList.add('show');
+          setTimeout(() => { whisperStatus.classList.remove('show'); whisperStatus.textContent = ''; }, 2500);
           return;
       }
 
-      input.disabled = true;
-      button.disabled = true;
-      status.textContent = 'sending...';
-      status.classList.add('show');
+      whisperInput.disabled = true;
+      whisperSendBtn.disabled = true;
+      whisperStatus.textContent = 'sending...';
+      whisperStatus.classList.add('show');
 
       try {
         const { data } = await sendWhisperFn({ text, userPubkey });
         if (data.ok) {
-          status.textContent = 'sent.';
+          whisperStatus.textContent = 'sent.';
         } else {
-          status.textContent = `❌ ${data.reason || 'Could not send'}`;
+          whisperStatus.textContent = `❌ ${data.reason || 'Could not send'}`;
         }
       } catch (e) {
-        status.textContent = '❌ error sending.';
+        whisperStatus.textContent = '❌ error sending.';
       }
 
-      input.value = '';
+      whisperInput.value = '';
       setTimeout(() => {
-        input.disabled = false;
-        button.disabled = false;
-        status.classList.remove('show');
-        status.textContent = '';
+        whisperInput.disabled = false;
+        whisperSendBtn.disabled = false;
+        whisperStatus.classList.remove('show');
+        whisperStatus.textContent = '';
       }, 2000);
     }
     
-    setInterval(async () => {
-      try {
-        const snap = await db.ref('whispers').once('value');
-        const data = snap.val();
-        if (!data) return;
-        const now = Date.now();
-        const cutoff = now - 20000;
-        Object.entries(data).forEach(([key, val]) => {
-          if (val.time < cutoff) {
-            db.ref('whispers/' + key).remove();
-          }
-        });
-      } catch (e) {
-        console.error('[whispr] auto-clean error:', e);
-      }
-    }, 20000);
-
-    button.addEventListener('click', sendWhisper);
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
-    });
+    whisperSendBtn.addEventListener('click', sendWhisper);
+    whisperInput.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); } });
   
+    // --- Live Feed & Cleanup ---
     db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
       const item = snap.val();
       if (!item || !item.text) return;
+      // Prikazujemo whisper koji je poslao drugi korisnik (ili naš vlastiti ako osvježimo stranicu)
       floatWhisper(item.text, false, !!item.colored);
     });
 
+    setInterval(async () => {
+      try {
+        const snap = await db.ref('whispers').orderByChild('time').endAt(Date.now() - 20000).get();
+        const data = snap.val();
+        if (!data) return;
+        const updates = {};
+        Object.keys(data).forEach(key => { updates[key] = null; });
+        db.ref('whispers').update(updates);
+      } catch (e) { console.error('[whispr] auto-clean error:', e); }
+    }, 20000);
+
+    // --- Inicijalizacija ---
+    updateAllUIs(); // Prvo postavljanje UI-a na temelju početnog stanja
     db.ref('connection-test').set({ok:true, t:Date.now()})
       .then(()=>console.log('[whispr] test write OK'))
       .catch(err=>console.error('[whispr] test write FAIL', err));
@@ -935,6 +788,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 </script>
 </body>
 </html>
+
 
 
 
