@@ -8,21 +8,21 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-    body {
-      margin: 0;
-      height: 100vh;
-      background: url('https://raw.githubusercontent.com/whisprcoin/whispr/refs/heads/main/5.png') no-repeat center center fixed;
-      background-size: cover;
-      color: #fff;
-      font-family: 'VT323', monospace;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      letter-spacing: 1px;
-      backdrop-filter: brightness(0.7) blur(1px);
-    }
+   body {
+  margin: 0;
+  height: 100vh;
+  background: url('https://raw.githubusercontent.com/whisprcoin/whispr/refs/heads/main/5.png') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  font-family: 'VT323', monospace;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  letter-spacing: 1px;
+  backdrop-filter: brightness(0.7) blur(1px);
+}
     
     h1 {
       font-size: 80px;
@@ -59,10 +59,6 @@
     .content {
       position: relative;
       z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
     }
 
     a {
@@ -75,224 +71,209 @@
     a:hover {
       color: #ffffff;
     }
-
     .footer-links {
-      position: fixed;
-      bottom: 25px;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      z-index: 2;
-    }
+  position: fixed;
+  bottom: 25px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 2;
+}
 
-    .footer-links a {
-      color: #9c9c9c;
-      text-decoration: none;
-      font-size: 20px;
-      margin: 0 15px;
-    }
+.footer-links a {
+  color: #9c9c9c;
+  text-decoration: none;
+  font-size: 20px;
+  margin: 0 15px;
+}
 
-    .footer-links a:hover {
-      color: #ffffff;
-    }
-
+.footer-links a:hover {
+  color: #ffffff;
+}
     .whispers {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      pointer-events: none;
-      z-index: 0;
-    }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
 
-    .whispers span {
-      position: absolute;
-      color: rgba(255, 255, 255, 0.25);
-      font-size: 20px;
-      font-family: 'VT323', monospace;
-      text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
-      animation: whisperMove 15s linear infinite;
-      opacity: 0;
-    }
+.whispers span {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.25); /* 🔥 jača vidljivost */
+  font-size: 20px; /* malo veći font */
+  font-family: 'VT323', monospace;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.1); /* lagani sjaj */
+  animation: whisperMove 15s linear infinite;
+  opacity: 0;
+}
 
-    @keyframes whisperMove {
-      0% { opacity: 0; transform: translateY(0); }
-      10% { opacity: 0.4; }
-      50% { opacity: 0.2; transform: translateY(-40px); }
-      90% { opacity: 0; }
-      100% { opacity: 0; transform: translateY(-80px); }
-    }
+@keyframes whisperMove {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 0.4; }
+  50% { opacity: 0.2; transform: translateY(-40px); }
+  90% { opacity: 0; }
+  100% { opacity: 0; transform: translateY(-80px); }
+}
+    /* ghost "shhh..." */
+.shhh-ghost{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,0.28);
+  font-family: 'VT323', monospace;
+  font-size: 32px;                 /* pojačaj/smanji po želji */
+  letter-spacing: 1px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6;                      /* iznad pozadine i whispers teksta */
+  text-shadow: 0 0 6px rgba(255,255,255,0.10);
+  transition: opacity 0.6s ease;
+}
+.shhh-ghost.show{ opacity: 1; }
+    .content {
+  position: relative;
+  z-index: 5;
+}
+      .whisper-box{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 25px;
+  margin-bottom: 25px;
+  width: 100%;
+}
+}
 
-    .shhh-ghost {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: rgba(255,255,255,0.28);
-      font-family: 'VT323', monospace;
-      font-size: 32px;
-      letter-spacing: 1px;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 6;
-      text-shadow: 0 0 6px rgba(255,255,255,0.10);
-      transition: opacity 0.6s ease;
-    }
-    .shhh-ghost.show { opacity: 1; }
+#whisperInput{
+  width: min(800px, 90vw);
+  padding: 10px 12px;
+  border: 1px solid #2a2a2a;
+  background: rgba(12,12,12,.8);
+  color: #eaeaea;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  outline: none;
+  border-radius: 6px;
+  transition: border-color .2s ease, background .2s ease;
+}
+#whisperInput::placeholder{ color:#6f6f6f; }
+    #whisperInput{
+  color: white;
+}
+#whisperInput:focus{
+  border-color:#555;
+  background: rgba(18,18,18,.9);
+}
 
-    .whisper-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      margin-top: 25px;
-      margin-bottom: 25px;
-      width: 100%;
-    }
+#whisperSend{
+  padding: 10px 14px;
+  border: 1px solid #2a2a2a;
+  background: rgba(18,18,18,.85);
+  color:#cfcfcf;
+  font-family: 'VT323', monospace;
+  font-size:18px;
+  border-radius:6px;
+  cursor:pointer;
+  transition: transform .08s ease, background .2s ease, color .2s;
+}
+#whisperSend:hover{ background:#1b1b1b; color:#fff; }
+#whisperSend:active{ transform: translateY(1px); }
 
-    #whisperInput {
-      width: min(600px, 90vw);
-      padding: 10px 12px;
-      border: 1px solid #2a2a2a;
-      background: rgba(12,12,12,.8);
-      color: #eaeaea;
-      font-family: 'VT323', monospace;
-      font-size: 18px;
-      outline: none;
-      border-radius: 6px;
-      transition: border-color .2s ease, background .2s ease;
-    }
-    #whisperInput::placeholder { color:#6f6f6f; }
-    #whisperInput:focus {
-      border-color:#555;
-      background: rgba(18,18,18,.9);
-    }
+.whisper-note{
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color:#6f6f6f;
+  margin-top: 6px;
+  opacity:.8;
+}
 
-    #whisperSend {
-      padding: 10px 14px;
-      border: 1px solid #2a2a2a;
-      background: rgba(18,18,18,.85);
-      color:#cfcfcf;
-      font-family: 'VT323', monospace;
-      font-size:18px;
-      border-radius:6px;
-      cursor:pointer;
-      transition: transform .08s ease, background .2s ease, color .2s;
-    }
-    #whisperSend:hover { background:#1b1b1b; color:#fff; }
-    #whisperSend:active { transform: translateY(1px); }
-    #whisperSend[disabled] { opacity:.6; cursor:not-allowed; }
+.whisper-status{
+  width:100%;
+  text-align:center;
+  font-size:16px;
+  color:#a8ffa8;
+  margin-top:8px;
+  min-height: 1em; /* da ne “skače” layout */
+  visibility: hidden;
+}
+.whisper-status.show{ visibility: visible; }
 
-    .whisper-note {
-      width: 100%;
-      text-align: center;
-      font-size: 14px;
-      color:#6f6f6f;
-      margin-top: 6px;
-      opacity:.8;
-    }
-
-    .whisper-status {
-      width:100%;
-      text-align:center;
-      font-size:16px;
-      color:#a8ffa8;
-      margin-top:8px;
-      min-height: 1em;
-      visibility: hidden;
-    }
-    .whisper-status.show { visibility: visible; }
-
+/* osiguraj da je content iznad pozadine/whispers slojeva */
+.content{ position: relative; z-index: 5; }
+    .user-whisper {
+  color: rgba(255, 255, 255, 0.65) !important; /* jače vidljiv */
+  text-shadow: 0 0 8px rgba(255,255,255,0.15);
+  font-size: 22px !important;
+  letter-spacing: 1px;
+}
     .content small {
-      display: block;
-      margin-top: 10px;
-      font-size: 18px;
-      color: rgba(255,255,255,0.65);
-    }
+  display: block;
+  margin-top: 10px;
+  font-size: 18px;
+  color: rgba(255,255,255,0.65);
+}
 
-    .color-row {
-      margin-top:10px;
-      display:flex; gap:10px; align-items:center; justify-content:center;
-      color:#cfcfcf;
-    }
-    #colorWhisperBtn {
-      padding:6px 10px;
-      border-radius:6px;
-      background:linear-gradient(90deg,#111,#222);
-      color:#fff;
-      border:1px solid rgba(255,255,255,0.06);
-      font-family:'VT323', monospace;
-      cursor: pointer;
-    }
-    #colorWhisperBtn[disabled] {
-      opacity: 0.6;
-      cursor: not-allowed;
-      background: #222;
-    }
-    #colorStatus { font-size:13px; color:#9c9c9c; }
-    #checkStatusBtn {
-      padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer;
-    }
-    #checkStatusBtn:hover:not(:disabled) { background: #333; color: #fff; }
-    #checkStatusBtn[disabled] { opacity: 0.6; cursor: not-allowed; }
+.whisper-box {
+  margin-top: 25px;   /* razmak ispod teksta */
+  margin-bottom: 25px; /* prije footera */
+}
+    .whispers {
+  pointer-events: none;
+  z-index: 0;
+  position: fixed;
+  inset: 0;
+}
 
-    /* === STILOVI ZA WHISPRBOT === */
-    .hidden { display: none !important; }
-    #showAiBtn {
-        margin-top: 20px;
-        padding: 8px 16px;
-        font-size: 18px;
-        background: linear-gradient(90deg, #1a1a1a, #2b2b2b);
-        border: 1px solid #a8ffa8;
-        color: #a8ffa8;
-        cursor: pointer;
-        border-radius: 6px;
-        font-family: 'VT323', monospace;
-    }
-    #ai-content { width: 100%; display: flex; flex-direction: column; align-items: center; }
-    .ai-chat-container {
-        margin-top: 20px;
-        width: min(600px, 90vw);
-        border: 1px solid #2a2a2a;
-        background: rgba(10, 10, 10, 0.85);
-        border-radius: 8px;
-        padding: 15px;
-        font-family: 'VT323', monospace;
-    }
-    .ai-chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .ai-chat-header h2 { margin: 0; font-size: 24px; color: #a8ffa8; }
-    #hideAiBtn { background: none; border: none; font-size: 24px; color: #777; cursor: pointer; }
-    #hideAiBtn:hover { color: #fff; }
+.content {
+  position: relative;
+  z-index: 5;
+}
+    .wallet-row{
+  margin-top:10px;
+  display:flex; gap:10px; align-items:center; justify-content:center;
+  opacity:.9;
+}
+#walletStatus{ color:#9c9c9c; font-size:14px; }
 
-    .ai-chat-history { height: 200px; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; display: flex; flex-direction: column; gap: 10px; text-align: left; font-size: 16px; }
-    .ai-chat-history p { font-size: 16px; margin: 0; }
-    .ai-chat-history .user-q { color: #888; }
-    .ai-chat-history .bot-a { color: #a8ffa8; }
+.admin-bar{
+  margin-top:10px;
+  display:flex; gap:10px; align-items:center; justify-content:center;
+  font-size:14px; color:#bbb;
+}
+#toggleMode{
+  padding:6px 10px; font-family:'VT323', monospace;
+  border:1px solid #2a2a2a; background:#0b0b0b; color:#fff; border-radius:6px;
+}
 
-    .ai-input-row { display: flex; gap: 10px; }
-    #aiQuestionInput { flex-grow: 1; background: rgba(0,0,0,0.5); border: 1px solid #333; color: #eee; padding: 8px 10px; border-radius: 4px; font-family: 'VT323', monospace; font-size: 16px; }
-    #aiQuestionInput:focus { outline: none; border-color: #555; }
-    #aiAskButton { padding: 8px 12px; background: #222; border: 1px solid #333; color: #bbb; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; font-size: 16px; }
-    #aiAskButton:hover:not(:disabled) { background: #333; color: #fff; }
-    #aiAskButton[disabled] { opacity: 0.5; cursor: not-allowed; }
-
-    #aiStatus { font-size: 14px; color: #777; margin-top: 8px; min-height: 1em; text-align: left; }
-    
-    .ai-wallet-actions { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-    #aiConnectWalletBtn { padding: 6px 12px; font-size: 14px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer; }
-    #aiConnectWalletBtn:hover:not(:disabled) { background: #333; color: #fff; }
-    #aiConnectWalletBtn[disabled] { opacity: 0.5; cursor: not-allowed; background: #111; color: #555; }
-    .ai-check-status-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #9c9c9c; }
-    #checkAiStatusBtn { padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer; }
-    #checkAiStatusBtn:hover:not(:disabled) { background: #333; color: #fff; }
-    #checkAiStatusBtn[disabled] { opacity: 0.5; cursor: not-allowed; }
-
-    .ai-sub-row { margin-top: 15px; text-align: center; }
-    #aiSubButton { width: 100%; padding: 8px; font-size: 14px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b); border: 1px solid #444; color: #a8ffa8; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; }
-    #aiSubButton[disabled] { opacity: 0.5; cursor: not-allowed; }
-    #aiSubStatus { font-size: 13px; color: #9c9c9c; display: block; margin-top: 6px; min-height: 1em; }
+/* zaključan UI */
+#whisperInput[disabled]{ opacity:.6; cursor:not-allowed; }
+#whisperSend[disabled]{ opacity:.6; cursor:not-allowed; }
+    .color-row{
+  margin-top:10px;
+  display:flex; gap:10px; align-items:center; justify-content:center;
+  color:#cfcfcf;
+}
+#colorWhisperBtn{
+  padding:6px 10px;
+  border-radius:6px;
+  background:linear-gradient(90deg,#111,#222);
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.06);
+  font-family:'VT323', monospace;
+}
+#colorWhisperBtn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #222;
+}
+#colorStatus{ font-size:13px; color:#9c9c9c; }
   </style>
 </head>
 <body>
@@ -304,129 +285,152 @@
     <span>not again...</span>
     <span>silence speaks first.</span>
   </div>
-  
+  <div class="live-whispers"></div>
   <div class="content">
+    <h1>whispr</h1>
     
-    <!-- === GLAVNI SADRŽAJ (VIDLJIV ODMAH) === -->
-    <div id="main-content">
-      <h1>whispr</h1>
-      <small>the value is in silence. 🔇</small>
-      
-      <div class="whisper-box">
-        <input id="whisperInput" type="text" maxlength="140" placeholder="send a whispr.">
-        <button id="whisperSend" aria-label="send whisper">send 🔇</button>
-        <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
-        <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
+    <small>the value is in silence. 🔇</small>
+    <div class="whisper-box">
+  <input id="whisperInput" type="text" maxlength="140"
+         placeholder="send a whispr.">
+  <button id="whisperSend" aria-label="send whisper">send 🔇</button>
+  <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
+  <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
+</div>
+    <!-- ⬇️ Colored whisper UI -->
+<div class="color-row">
+  <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
+  <button id="checkColorStatusBtn" type="button">Check Color Status</button>
+  <span id="colorStatus">no color active</span>
+</div>
+
+    <!-- ================================== -->
+    <!--      ⬇️ WHISPRBOT AI UI ⬇️      -->
+    <!-- ================================== -->
+    <div class="ai-chat-container">
+      <div id="aiChatHistory" class="ai-chat-history">
+        <!-- Bot's welcome message will be added by JS -->
       </div>
-      
-      <div class="color-row">
-        <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
-        <span id="colorStatus"></span>
+      <div class="ai-input-row">
+        <input id="aiQuestionInput" type="text" placeholder="ask the silence...">
+        <button id="aiAskButton">ask</button>
       </div>
-      
-      <div class="color-row" style="margin-top: 8px; gap: 8px;">
-        <span style="font-size: 13px; color: #9c9c9c;">Already paid?</span>
-        <button id="checkStatusBtn" type="button">Check Status</button>
-      </div>
-
-      <button id="showAiBtn">Try WhisprBot AI</button>
-    </div>
-
-    <!-- === AI CHAT SADRŽAJ (SKRIVEN) === -->
-    <div id="ai-content" class="hidden">
-      <div class="ai-chat-container">
-        <div class="ai-chat-header">
-          <h2>WhisprBot AI</h2>
-          <button id="hideAiBtn" title="Back to main page">×</button>
-        </div>
-        <div id="aiChatHistory" class="ai-chat-history">
-          <!-- Poruke se dodaju dinamički -->
-        </div>
-        <div class="ai-input-row">
-          <input id="aiQuestionInput" type="text" placeholder="ask the silence...">
-          <button id="aiAskButton">ask</button>
-        </div>
-        
-        <div id="aiStatus" class="ai-status"></div>
-
-        <div class="ai-wallet-actions">
-            <button id="aiConnectWalletBtn">Connect Wallet</button>
-            <div class="ai-check-status-row">
-                <span>Already paid?</span>
-                <button id="checkAiStatusBtn">Check Status</button>
-            </div>
-        </div>
-
-        <div class="ai-sub-row">
+      <div id="aiStatus" class="ai-status">connect wallet to begin...</div>
+      <div class="ai-sub-row">
           <button id="aiSubButton">Subscribe for unlimited answers — 0.01 SOL / month</button>
+          <button id="checkAiStatusBtn" type="button">Check AI Status</button>
           <span id="aiSubStatus"></span>
-        </div>
       </div>
     </div>
 
+    <!-- ================================== -->
+    <!--      ⬇️ WHISPRBOT CSS ⬇️       -->
+    <!-- ================================== -->
+    <style>
+      .ai-chat-container { margin-top: 40px; width: min(600px, 90vw); border: 1px solid #2a2a2a; background: rgba(10, 10, 10, 0.85); border-radius: 8px; padding: 15px; font-family: 'VT323', monospace; }
+      .ai-chat-history { height: 150px; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; display: flex; flex-direction: column; gap: 10px; text-align: left; font-size: 16px; }
+      .ai-chat-history p { font-size: 16px; margin: 0; }
+      .ai-chat-history .user-q { color: #888; }
+      .ai-chat-history .bot-a { color: #a8ffa8; }
+      .ai-input-row { display: flex; gap: 10px; }
+      #aiQuestionInput { flex-grow: 1; background: rgba(0,0,0,0.5); border: 1px solid #333; color: #eee; padding: 8px 10px; border-radius: 4px; font-family: 'VT323', monospace; font-size: 16px; }
+      #aiQuestionInput:focus { outline: none; border-color: #555; }
+      #aiAskButton { padding: 8px 12px; background: #222; border: 1px solid #333; color: #bbb; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; font-size: 16px; }
+      #aiAskButton:hover:not(:disabled) { background: #333; color: #fff; }
+      #aiAskButton:disabled { opacity: 0.5; cursor: not-allowed; }
+      .ai-status { font-size: 14px; color: #777; margin-top: 8px; min-height: 1em; }
+      .ai-sub-row { margin-top: 15px; text-align: center; display: flex; gap: 10px; align-items: center; }
+      #aiSubButton { flex-grow: 1; padding: 8px; font-size: 14px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b); border: 1px solid #444; color: #a8ffa8; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; }
+      #aiSubButton:disabled { opacity: 0.5; cursor: not-allowed; }
+      #aiSubStatus { font-size: 13px; color: #9c9c9c; display: block; margin-top: 6px; min-height: 1em; }
+      /* Stil za nove gumbe */
+      #checkColorStatusBtn, #checkAiStatusBtn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: #333;
+        color: #ccc;
+        border: 1px solid #555;
+        font-family: 'VT323', monospace;
+        cursor: pointer;
+      }
+      #checkColorStatusBtn:disabled, #checkAiStatusBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    </style>
+    <div class="footer-links">
+  <a href="https://x.com/whisprcoin" target="_blank">x</a>
+  <a href="#" target="_blank">solscan (soon)</a>
+</div>
   </div>
-
-  <div class="footer-links">
-    <a href="https://x.com/whisprcoin" target="_blank">x</a>
-    <a href="#" target="_blank">solscan (soon)</a>
-  </div>
-
   <script>
-  // --- Animirani elementi (bez promjena) ---
-  (function() {
-    const whispers = document.querySelectorAll('.whispers span');
-    function randomizeWhispers() {
-      whispers.forEach(w => {
-        w.style.top = Math.random() * 100 + '%';
-        w.style.left = Math.random() * 100 + '%';
-        w.style.animationDelay = (Math.random() * 10) + 's';
-      });
-    }
-    randomizeWhispers();
-    setInterval(randomizeWhispers, 15000);
-
-    function spawnShhh(){
-      const old = document.querySelector('.shhh-ghost');
-      if (old) old.remove();
-      const s = document.createElement('div');
-      s.className = 'shhh-ghost';
-      s.textContent = 'shhh...';
-      document.body.appendChild(s);
-      requestAnimationFrame(() => s.classList.add('show'));
-      setTimeout(() => {
-        s.classList.remove('show');
-        setTimeout(() => s.remove(), 600);
-      }, 1400);
-    }
-    const titleEl = document.querySelector('#main-content h1');
-    if (titleEl){
-      titleEl.addEventListener('mouseenter', spawnShhh);
-      titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
-    }
-  })();
+  const whispers = document.querySelectorAll('.whispers span');
+  function randomizeWhispers() {
+    whispers.forEach(w => {
+      w.style.top = Math.random() * 100 + '%';
+      w.style.left = Math.random() * 100 + '%';
+      w.style.animationDelay = (Math.random() * 10) + 's';
+    });
+  }
+  randomizeWhispers();
+  setInterval(randomizeWhispers, 15000);
 </script>
+   <script>
+  // kreira i prikaže "shhh..." pa ga makne
+  function spawnShhh(){
+    // makni postojeći ako već traje (spriječi spam)
+    const old = document.querySelector('.shhh-ghost');
+    if (old) old.remove();
 
-<!-- Firebase & Solana SDKs -->
+    const s = document.createElement('div');
+    s.className = 'shhh-ghost';
+    s.textContent = 'shhh...';
+    document.body.appendChild(s);
+
+    // fade in
+    requestAnimationFrame(() => s.classList.add('show'));
+
+    // nakon 1.4s počni gasiti, pa ukloni
+    setTimeout(() => {
+      s.classList.remove('show');
+      setTimeout(() => s.remove(), 600);
+    }, 1400);
+  }
+
+  // ciljaj H1 unutar .content (tvoj "whispr")
+  const titleEl = document.querySelector('.content h1');
+
+  if (titleEl){
+    // hover na desktopu
+    titleEl.addEventListener('mouseenter', spawnShhh);
+    // tap na mobitelu
+    titleEl.addEventListener('touchstart', spawnShhh, {passive:true});
+  }
+</script>
+<!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
-<script src="./buffer-shim.js?v=1.0.1"></script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous"></script>
 
-<script>
-// --- Glavna skripta aplikacije ---
+<!-- Buffer polyfill -->
+<script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
+
+<!-- ✅ OVAJ NOVI FAJL MORA BITI IZMEĐU buffer.min.js i web3.js -->
+<script src="./buffer-shim.js?v=1.0.1"></script>
+<!-- Ako ti je index.html u /docs, onda je opet ./buffer-setup.js jer je u istom folderu -->
+
+<!-- Solana web3 IIFE (nakon buffer-setup.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous"></script>
+ <script>
 (function(){
   console.log('[whispr] boot');
 
-  // Lightweight profanity filter
-  const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this.regex=/@|\$|\\|\*/g,this.replaceRegex=/\w/g}return e.prototype.isProfane=function(e){for(var t=0;t<this.list.length;t++)if(new RegExp("\\b"+this.list[t].replace(/(\W)/g,"\\$1")+"\\b","gi").test(e))return!0;return!1},e.prototype.replaceWord=function(e){return e.replace(this.regex,"").replace(this.replaceRegex,this.placeHolder)},e.prototype.clean=function(e){return e.split(" ").map(function(e){return this.isProfane(e)?this.replaceWord(e):e}.bind(this)).join(" ")},e.prototype.addWords=function(){var e=Array.from(arguments);this.list=this.list.concat(e)},e.prototype.removeWords=function(){for(var e=Array.from(arguments),t=0;t<e.length;t++)for(var r=e[t],i=this.list.length-1;i>=0;i--)this.list[i]===r&&this.list.splice(i,1)},e})();
-
+  // 1) Init kad se sve učita (da elementi postoje)
   window.addEventListener('load', function(){
     console.log('[whispr] dom ready');
 
-    // --- Firebase & Cloud Functions Setup ---
-    const firebaseConfig = {
+    // 2) Firebase config
+    const cfg = {
       apiKey: "AIzaSyD1R-5ltVcfW8PiuoJ4d7Kt2kouIS0M4Do",
       authDomain: "whisprcoin.firebaseapp.com",
       databaseURL: "https://whisprcoin-default-rtdb.europe-west1.firebasedatabase.app",
@@ -436,43 +440,35 @@
       appId: "1:1063673504189:web:938b00b8a6871b0a5db2d4",
       measurementId: "G-ZYWYEXVG4F"
     };
-    if (!window.firebase || !firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+
+    if (!window.firebase) { console.error('[whispr] Firebase SDK nije učitan'); return; }
+    if (!firebase.apps.length) { firebase.initializeApp(cfg); console.log('[whispr] firebase init OK'); }
     const db = firebase.database();
+
+    // === Cloud Functions (us-central1) ===
     const fns = firebase.app().functions('us-central1');
-    const getPassStatus = fns.httpsCallable('getPassStatus');
+    const getPassStatus   = fns.httpsCallable('getPassStatus');
+    const getAiSubStatus  = fns.httpsCallable('getAiSubStatus'); // NOVO
     const getBlockhash = fns.httpsCallable('getBlockhash');
-    const sendWhisperFn = fns.httpsCallable('sendWhisper');
     const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
     const askWhisprBotFn = fns.httpsCallable('askWhisprBot');
     const confirmAndVerifyAiSubscription = fns.httpsCallable('confirmAndVerifyAiSubscription');
 
-    // --- UI Elementi ---
-    const mainContent = document.getElementById('main-content');
-    const aiContent = document.getElementById('ai-content');
-    const showAiBtn = document.getElementById('showAiBtn');
-    const hideAiBtn = document.getElementById('hideAiBtn');
-    
-    const colorBtn = document.getElementById('colorWhisperBtn');
+    // === UI elementi za colored pass ===
+    const colorBtn    = document.getElementById('colorWhisperBtn');
+    const checkColorStatusBtn = document.getElementById('checkColorStatusBtn'); // NOVO
     const colorStatus = document.getElementById('colorStatus');
-    const checkStatusBtn = document.getElementById('checkStatusBtn');
 
+    // === UI elementi i stanje za WhisprBot AI ===
     const aiChatHistory = document.getElementById('aiChatHistory');
     const aiQuestionInput = document.getElementById('aiQuestionInput');
     const aiAskButton = document.getElementById('aiAskButton');
     const aiStatus = document.getElementById('aiStatus');
     const aiSubButton = document.getElementById('aiSubButton');
+    const checkAiStatusBtn = document.getElementById('checkAiStatusBtn'); // NOVO
     const aiSubStatus = document.getElementById('aiSubStatus');
-    const aiConnectWalletBtn = document.getElementById('aiConnectWalletBtn');
-    const checkAiStatusBtn = document.getElementById('checkAiStatusBtn');
 
-    const whisperInput = document.getElementById('whisperInput');
-    const whisperSendBtn = document.getElementById('whisperSend');
-    const whisperStatus = document.getElementById('whisperStatus');
-    const whispersLayer = document.querySelector('.whispers');
-
-    // --- Globalno stanje ---
+    // globalno stanje
     let userPubkey = null;
     let passActive = false;
     let passUntil  = 0;
@@ -480,113 +476,73 @@
     let aiSubUntil = 0;
     let freeMessagesUsed = 0;
     const AI_FREE_MESSAGE_LIMIT = 5;
-    const profanityFilter = new Filter();
 
-    // --- UI Toggling ---
-    showAiBtn.addEventListener('click', () => {
-      mainContent.classList.add('hidden');
-      aiContent.classList.remove('hidden');
-    });
-    hideAiBtn.addEventListener('click', () => {
-      aiContent.classList.add('hidden');
-      mainContent.classList.remove('hidden');
-    });
-
-    // --- Wallet & Status Management ---
-    
-    async function connectWallet() {
-        const provider = window.solana;
-        if (!provider?.isPhantom) {
-            alert('Phantom wallet is not installed.');
-            return null;
-        }
-        try {
-            const resp = await provider.connect();
-            const pubkey = resp.publicKey.toString();
-            console.log('[whispr] Wallet connected:', pubkey);
-            userPubkey = pubkey;
-            await refreshAllStatuses();
-            return pubkey;
-        } catch (err) {
-            console.error('[whispr] Wallet connection failed:', err);
-            userPubkey = null;
-            updateAllUIs();
-            return null;
-        }
-    }
-
-    async function refreshAllStatuses() {
-      if (!userPubkey) {
-        updateAllUIs();
-        return;
-      }
-      setLoadingState(true, 'checking status...');
-      try {
-        const { data } = await getPassStatus({ userPubkey });
-        if (!data.ok) throw new Error(data.reason || 'Status check failed');
-        
-        console.log('[whispr] getPassStatus response:', data);
-        passActive = !!data.colorPass?.active;
-        passUntil  = data.colorPass?.active_until || 0;
-        aiSubActive = !!data.aiSub?.active;
-        aiSubUntil = data.aiSub?.active_until || 0;
-        freeMessagesUsed = data.aiSub?.free_messages_used || 0;
-      } catch (e) {
-        console.error('[whispr] getPassStatus error:', e);
-        colorStatus.textContent = 'status check failed';
-        aiStatus.textContent = 'status check failed';
-        passActive = false;
-        aiSubActive = false;
-      } finally {
-        setLoadingState(false);
-        updateAllUIs();
-      }
-    }
-
-    function setLoadingState(isLoading, text = '') {
-        checkStatusBtn.disabled = isLoading;
-        checkAiStatusBtn.disabled = isLoading;
-        colorBtn.disabled = isLoading;
-        aiSubButton.disabled = isLoading;
-        if (isLoading) {
-            colorStatus.textContent = text;
-            aiStatus.textContent = text;
-        }
-    }
-
-    function updateAllUIs() {
-        renderColorStatus();
-        updateAiStatus();
-    }
-
-    // --- UI Update Functions ---
     function renderColorStatus() {
-      if (passActive && passUntil > Date.now()) {
+      if (!colorStatus) return;
+      if (passActive) {
         const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
         colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
         colorBtn.disabled = true;
       } else {
-        passActive = false;
-        colorStatus.textContent = userPubkey ? 'no color active' : 'connect wallet first';
+        colorStatus.textContent = 'no color active';
         colorBtn.disabled = false;
       }
+    }
+
+    const handleWalletReady = () => {
+      const provider = window.solana;
+      if (provider?.isPhantom && provider.publicKey) {
+        console.log('[whispr] Phantom wallet is already connected.');
+        afterWalletConnected(provider.publicKey.toString());
+      } else {
+        console.log('[whispr] Phantom wallet not connected on load.');
+        updateUiOnWalletStateChange();
+      }
+    };
+
+    if (window.solana) {
+      handleWalletReady();
+    } else {
+      window.addEventListener('solana#initialized', handleWalletReady, { once: true });
+    }
+
+    function afterWalletConnected(pubkey){
+      userPubkey = pubkey;
+      updateUiOnWalletStateChange();
+    }
+    
+    function updateUiOnWalletStateChange() {
+        const isConnected = !!userPubkey;
+        checkColorStatusBtn.disabled = !isConnected;
+        checkAiStatusBtn.disabled = !isConnected;
+        aiAskButton.disabled = !isConnected;
+        aiSubButton.disabled = !isConnected;
+        colorBtn.disabled = !isConnected;
+
+        if (!isConnected) {
+            aiStatus.textContent = 'connect wallet to begin...';
+            colorStatus.textContent = 'connect wallet to begin...';
+        }
+    }
+
+    // === WHISPRBOT AI FUNKCIJE ===
+
+    function addMessageToChat(message, type) {
+      if (!aiChatHistory) return;
+      const p = document.createElement('p');
+      p.textContent = message;
+      p.className = type; // 'user-q' ili 'bot-a'
+      aiChatHistory.appendChild(p);
+      aiChatHistory.scrollTop = aiChatHistory.scrollHeight; // Auto-scroll
     }
 
     function updateAiStatus() {
       if (!userPubkey) {
         aiStatus.textContent = 'connect wallet to begin...';
         aiAskButton.disabled = true;
-        aiSubButton.disabled = false;
-        aiSubButton.textContent = 'Connect Wallet & Subscribe — 0.01 SOL / month';
-        aiConnectWalletBtn.disabled = false;
-        aiConnectWalletBtn.textContent = 'Connect Wallet';
-        checkAiStatusBtn.disabled = false; // ✅ FIX: Gumb je UVIJEK omogućen
+        aiSubButton.disabled = true;
         return;
       }
-      
-      aiConnectWalletBtn.disabled = true;
-      aiConnectWalletBtn.textContent = 'Wallet Connected';
-      checkAiStatusBtn.disabled = false;
 
       if (aiSubActive) {
         const daysLeft = Math.ceil((aiSubUntil - Date.now()) / (1000 * 60 * 60 * 24));
@@ -608,105 +564,23 @@
       }
     }
 
-    // --- Payment & Action Handlers ---
-    async function handlePayment(price, confirmationFn, statusElement) {
-        const provider = window.solana;
-        const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
-
-        if (!provider?.isPhantom) { alert('Phantom wallet is not installed.'); return; }
-        if (!window.solanaWeb3) { alert('Solana web3 is not loaded (hard refresh).'); return; }
-
-        try {
-            if (!userPubkey) {
-                const newKey = await connectWallet();
-                if (!newKey) return;
-            }
-
-            if ((confirmationFn.name.includes('Ai') && aiSubActive) || (confirmationFn.name.includes('Payment') && passActive)) {
-                statusElement.textContent = '✅ Already active!';
-                updateAllUIs();
-                return;
-            }
-
-            statusElement.textContent = 'getting blockhash…';
-            const bh = await getBlockhash();
-            const { blockhash, lastValidBlockHeight } = bh?.data;
-            if (!blockhash || !lastValidBlockHeight) throw new Error('No blockhash from backend');
-
-            statusElement.textContent = 'opening Phantom…';
-            const tx = new window.solanaWeb3.Transaction({
-                feePayer: new window.solanaWeb3.PublicKey(userPubkey),
-                recentBlockhash: blockhash,
-            }).add(
-                window.solanaWeb3.SystemProgram.transfer({
-                    fromPubkey: new window.solanaWeb3.PublicKey(userPubkey),
-                    toPubkey: new window.solanaWeb3.PublicKey(MERCHANT),
-                    lamports: Math.round(price * 1_000_000_000)
-                })
-            );
-
-            statusElement.textContent = 'awaiting approval…';
-            const { signature } = await provider.signAndSendTransaction(tx);
-            
-            statusElement.textContent = 'confirming…';
-            const { data } = await confirmationFn({ userPubkey, signature, blockhash, lastValidBlockHeight });
-
-            if (data?.ok) {
-                await refreshAllStatuses();
-            } else {
-                throw new Error(data?.reason || 'verification failed');
-            }
-        } catch (e) {
-            console.error('Payment error:', e);
-            statusElement.textContent = `❌ ${e.message.includes('User rejected') ? 'cancelled' : 'failed'}`;
-            updateAllUIs();
-        }
-    }
-    
-    async function onCheckColorStatusClick() {
-      if (!userPubkey) {
-        colorStatus.textContent = 'connect wallet first';
-        return;
-      }
-      await refreshAllStatuses();
-    }
-    
-    // ✅ FIX: Gumb u AI sekciji ima dvostruku ulogu
-    async function onCheckAiStatusClick() {
-        if (!userPubkey) {
-            await connectWallet(); // Ako nije spojen, spoji ga (workaround za refresh)
-        } else {
-            await refreshAllStatuses(); // Ako je spojen, provjeri status
-        }
-    }
-
-    colorBtn.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyPayment, colorStatus));
-    aiSubButton.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyAiSubscription, aiSubStatus));
-    checkStatusBtn.addEventListener('click', onCheckColorStatusClick);
-    aiConnectWalletBtn.addEventListener('click', connectWallet);
-    checkAiStatusBtn.addEventListener('click', onCheckAiStatusClick);
-
-    // --- WhisprBot AI Logic ---
-    function addMessageToChat(message, type) {
-      const p = document.createElement('p');
-      p.textContent = message;
-      p.className = type;
-      aiChatHistory.appendChild(p);
-      aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
-    }
-
     async function askBot() {
       const question = aiQuestionInput.value.trim();
       if (!question || !userPubkey || aiAskButton.disabled) return;
+
       addMessageToChat(`> ${question}`, 'user-q');
       aiQuestionInput.value = '';
       aiAskButton.disabled = true;
       aiStatus.textContent = 'thinking...';
+
       try {
         const { data } = await askWhisprBotFn({ question, userPubkey });
+
         if (data.ok) {
           addMessageToChat(data.answer, 'bot-a');
-          if (!aiSubActive) freeMessagesUsed++;
+          if (!aiSubActive) {
+            freeMessagesUsed++;
+          }
         } else {
           addMessageToChat(`... ${data.reason || 'an error occurred'} ...`, 'bot-a');
         }
@@ -717,86 +591,219 @@
         updateAiStatus();
       }
     }
-    
-    addMessageToChat('...i am listening...', 'bot-a');
-    aiAskButton.addEventListener('click', askBot);
-    aiQuestionInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); askBot(); } });
 
-    // --- Whisper Sending Logic ---
+    addMessageToChat('...i am listening...', 'bot-a');
+    updateUiOnWalletStateChange();
+
+    aiAskButton?.addEventListener('click', askBot);
+    aiQuestionInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); askBot(); }
+    });
+
+    // === LOGIKA PLAĆANJA I PROVJERE ===
+
+    async function connectWalletIfNeeded() {
+        const provider = window.solana;
+        if (!provider?.isPhantom) {
+            alert('Phantom wallet is not installed.');
+            return false;
+        }
+        if (!provider.publicKey) {
+            try {
+                const resp = await provider.connect();
+                afterWalletConnected(resp.publicKey.toString());
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // --- Color Pass ---
+    checkColorStatusBtn?.addEventListener('click', async () => {
+        if (!await connectWalletIfNeeded()) return;
+        checkColorStatusBtn.disabled = true;
+        colorStatus.textContent = 'checking...';
+        try {
+            const { data } = await getPassStatus({ userPubkey });
+            passActive = data.active;
+            passUntil = data.active_until || 0;
+            renderColorStatus();
+        } catch (e) {
+            colorStatus.textContent = 'Error checking status.';
+        } finally {
+            checkColorStatusBtn.disabled = false;
+        }
+    });
+
+    colorBtn?.addEventListener('click', async () => {
+      if (!await connectWalletIfNeeded()) return;
+      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
+      const PRICE_SOL = 0.01;
+      
+      try {
+        colorBtn.disabled = true;
+        colorStatus.textContent = 'getting blockhash…';
+        const { data: bh } = await getBlockhash();
+        if (!bh.blockhash) throw new Error('No blockhash');
+
+        colorStatus.textContent = 'opening Phantom…';
+        const tx = new window.solanaWeb3.Transaction({
+          feePayer: new window.solanaWeb3.PublicKey(userPubkey),
+          recentBlockhash: bh.blockhash,
+        }).add(
+          window.solanaWeb3.SystemProgram.transfer({ 
+              fromPubkey: new window.solanaWeb3.PublicKey(userPubkey), 
+              toPubkey: new window.solanaWeb3.PublicKey(MERCHANT), 
+              lamports: Math.round(PRICE_SOL * 1_000_000_000) 
+            })
+        );
+
+        const { signature } = await window.solana.signAndSendTransaction(tx);
+        colorStatus.textContent = 'confirming…';
+        const { data } = await confirmAndVerifyPayment({ userPubkey, signature, blockhash: bh.blockhash, lastValidBlockHeight: bh.lastValidBlockHeight });
+
+        if (data?.ok) {
+          passActive = true;
+          passUntil  = data.active_until || 0;
+          renderColorStatus();
+        } else {
+          colorStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
+        }
+      } catch (e) {
+        console.error('Payment error:', e);
+        colorStatus.textContent = '❌ cancelled or failed';
+      } finally {
+        colorBtn.disabled = passActive;
+      }
+    });
+
+    // --- AI Subscription ---
+    checkAiStatusBtn?.addEventListener('click', async () => {
+        if (!await connectWalletIfNeeded()) return;
+        checkAiStatusBtn.disabled = true;
+        aiStatus.textContent = 'checking...';
+        try {
+            const { data } = await getAiSubStatus({ userPubkey });
+            aiSubActive = data.active;
+            aiSubUntil = data.active_until || 0;
+            freeMessagesUsed = data.free_messages_used || 0;
+            updateAiStatus();
+        } catch (e) {
+            aiStatus.textContent = 'Error checking status.';
+        } finally {
+            checkAiStatusBtn.disabled = false;
+        }
+    });
+
+    aiSubButton?.addEventListener('click', async () => {
+      if (!await connectWalletIfNeeded()) return;
+      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
+      const PRICE_SOL = 0.01;
+
+      try {
+        aiSubButton.disabled = true;
+        aiSubStatus.textContent = 'getting blockhash…';
+        const { data: bh } = await getBlockhash();
+        if (!bh.blockhash) throw new Error('No blockhash');
+
+        aiSubStatus.textContent = 'opening Phantom…';
+        const tx = new window.solanaWeb3.Transaction({
+          feePayer: new window.solanaWeb3.PublicKey(userPubkey),
+          recentBlockhash: bh.blockhash,
+        }).add(
+          window.solanaWeb3.SystemProgram.transfer({ 
+              fromPubkey: new window.solanaWeb3.PublicKey(userPubkey), 
+              toPubkey: new window.solanaWeb3.PublicKey(MERCHANT), 
+              lamports: Math.round(PRICE_SOL * 1_000_000_000) 
+            })
+        );
+
+        const { signature } = await window.solana.signAndSendTransaction(tx);
+        aiSubStatus.textContent = 'confirming…';
+        const { data } = await confirmAndVerifyAiSubscription({ userPubkey, signature, blockhash: bh.blockhash, lastValidBlockHeight: bh.lastValidBlockHeight });
+
+        if (data?.ok) {
+          aiSubActive = true;
+          aiSubUntil  = data.active_until || 0;
+          updateAiStatus();
+        } else {
+          aiSubStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
+        }
+      } catch (e) {
+        console.error('AI Sub Payment error:', e);
+        aiSubStatus.textContent = '❌ cancelled or failed';
+      } finally {
+        aiSubButton.disabled = aiSubActive;
+      }
+    });
+
+    // --- Whisper Slanje ---
+    const layer  = document.querySelector('.whispers');
+    const input  = document.getElementById('whisperInput');
+    const button = document.getElementById('whisperSend');
+    const status = document.getElementById('whisperStatus');
+
     function floatWhisper(text, strong, colored = false){
+      if (!layer) return;
       const s = document.createElement('span');
       s.textContent = text;
       s.style.position = 'absolute';
       s.style.top  = (10 + Math.random()*80) + '%';
       s.style.left = (5 + Math.random()*90) + '%';
+      s.style.setProperty('--whisper-glow-color', colored ? '#a8ffa8' : 'rgba(255,255,255,0.1)');
       s.style.color = colored ? '#a8ffa8' : (strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)');
-      s.style.textShadow = `0 0 10px ${colored ? '#a8ffa8' : 'rgba(255,255,255,0.1)'}`;
+      s.style.textShadow = '0 0 10px var(--whisper-glow-color)';
       s.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
       s.style.animation = 'whisperMove 12s linear 1';
       s.style.opacity = '0';
-      whispersLayer.appendChild(s);
+      layer.appendChild(s);
       setTimeout(()=>s.remove(), 12000);
     }
 
     async function sendWhisper(){
-      const text = (whisperInput.value || '').trim();
+      const text = (input.value || '').trim();
       if (!text) return;
-
-      if (profanityFilter.isProfane(text)) {
-          whisperStatus.textContent = '❌ inappropriate language';
-          whisperStatus.classList.add('show');
-          setTimeout(() => { whisperStatus.classList.remove('show'); whisperStatus.textContent = ''; }, 2500);
-          return;
-      }
-
-      whisperInput.disabled = true;
-      whisperSendBtn.disabled = true;
-      whisperStatus.textContent = 'sending...';
-      whisperStatus.classList.add('show');
-
+      const isColored = passActive && (passUntil > Date.now());
+      floatWhisper(text, true, isColored);
       try {
-        const { data } = await sendWhisperFn({ text, userPubkey });
-        if (data.ok) {
-          whisperStatus.textContent = 'sent.';
-        } else {
-          whisperStatus.textContent = `❌ ${data.reason || 'Could not send'}`;
-        }
-      } catch (e) {
-        whisperStatus.textContent = '❌ error sending.';
+        await db.ref('whispers').push({ text, time: Date.now(), colored: isColored });
+        if (status){ status.textContent = 'sent.'; setTimeout(()=>status.textContent='', 1500); }
+      } catch(e){
+        console.error('[whispr] save ERROR', e);
+        if (status){ status.textContent = 'error.'; setTimeout(()=>status.textContent='', 2000); }
       }
-
-      whisperInput.value = '';
-      setTimeout(() => {
-        whisperInput.disabled = false;
-        whisperSendBtn.disabled = false;
-        whisperStatus.classList.remove('show');
-        whisperStatus.textContent = '';
-      }, 2000);
+      input.value = '';
     }
     
-    whisperSendBtn.addEventListener('click', sendWhisper);
-    whisperInput.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); } });
+    setInterval(async () => {
+      try {
+        const snap = await db.ref('whispers').once('value');
+        const data = snap.val();
+        if (!data) return;
+        const cutoff = Date.now() - 20000;
+        Object.entries(data).forEach(([key, val]) => {
+          if (val.time < cutoff) {
+            db.ref('whispers/' + key).remove();
+          }
+        });
+      } catch (e) {
+        console.error('[whispr] auto-clean error:', e);
+      }
+    }, 20000);
+
+    button.addEventListener('click', sendWhisper);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
+    });
   
-    // --- Live Feed & Cleanup ---
     db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
       const item = snap.val();
       if (!item || !item.text) return;
       floatWhisper(item.text, false, !!item.colored);
     });
 
-    setInterval(async () => {
-      try {
-        const snap = await db.ref('whispers').orderByChild('time').endAt(Date.now() - 20000).get();
-        const data = snap.val();
-        if (!data) return;
-        const updates = {};
-        Object.keys(data).forEach(key => { updates[key] = null; });
-        db.ref('whispers').update(updates);
-      } catch (e) { console.error('[whispr] auto-clean error:', e); }
-    }, 20000);
-
-    // --- Inicijalizacija ---
-    updateAllUIs(); // Prvo postavljanje UI-a na temelju početnog stanja
     db.ref('connection-test').set({ok:true, t:Date.now()})
       .then(()=>console.log('[whispr] test write OK'))
       .catch(err=>console.error('[whispr] test write FAIL', err));
@@ -804,7 +811,9 @@
 })();
 </script>
 </body>
+
 </html>
+
 
 
 
