@@ -235,7 +235,7 @@
     #checkStatusBtn {
       padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer;
     }
-    #checkStatusBtn:hover { background: #333; color: #fff; }
+    #checkStatusBtn:hover:not(:disabled) { background: #333; color: #fff; }
     #checkStatusBtn[disabled] { opacity: 0.6; cursor: not-allowed; }
 
     /* === STILOVI ZA WHISPRBOT === */
@@ -278,11 +278,16 @@
     #aiAskButton:hover:not(:disabled) { background: #333; color: #fff; }
     #aiAskButton[disabled] { opacity: 0.5; cursor: not-allowed; }
 
-    .ai-status-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 10px; }
-    #aiStatus { font-size: 14px; color: #777; min-height: 1em; flex-grow: 1; text-align: left; }
-    .check-status-btn { padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer; flex-shrink: 0; }
-    .check-status-btn:hover { background: #333; color: #fff; }
-    .check-status-btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+    #aiStatus { font-size: 14px; color: #777; margin-top: 8px; min-height: 1em; text-align: left; }
+    
+    .ai-wallet-actions { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    #aiConnectWalletBtn { padding: 6px 12px; font-size: 14px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer; }
+    #aiConnectWalletBtn:hover:not(:disabled) { background: #333; color: #fff; }
+    #aiConnectWalletBtn[disabled] { opacity: 0.5; cursor: not-allowed; background: #111; color: #555; }
+    .ai-check-status-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #9c9c9c; }
+    #checkAiStatusBtn { padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer; }
+    #checkAiStatusBtn:hover:not(:disabled) { background: #333; color: #fff; }
+    #checkAiStatusBtn[disabled] { opacity: 0.5; cursor: not-allowed; }
 
     .ai-sub-row { margin-top: 15px; text-align: center; }
     #aiSubButton { width: 100%; padding: 8px; font-size: 14px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b); border: 1px solid #444; color: #a8ffa8; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; }
@@ -341,10 +346,17 @@
           <input id="aiQuestionInput" type="text" placeholder="ask the silence...">
           <button id="aiAskButton">ask</button>
         </div>
-        <div class="ai-status-row">
-          <span id="aiStatus" class="ai-status"></span>
-          <button id="checkAiStatusBtn" class="check-status-btn">Check Status</button>
+        
+        <div id="aiStatus" class="ai-status"></div>
+
+        <div class="ai-wallet-actions">
+            <button id="aiConnectWalletBtn">Connect Wallet</button>
+            <div class="ai-check-status-row">
+                <span>Already paid?</span>
+                <button id="checkAiStatusBtn">Check Status</button>
+            </div>
         </div>
+
         <div class="ai-sub-row">
           <button id="aiSubButton">Subscribe for unlimited answers — 0.01 SOL / month</button>
           <span id="aiSubStatus"></span>
@@ -452,6 +464,7 @@
     const aiStatus = document.getElementById('aiStatus');
     const aiSubButton = document.getElementById('aiSubButton');
     const aiSubStatus = document.getElementById('aiSubStatus');
+    const aiConnectWalletBtn = document.getElementById('aiConnectWalletBtn');
     const checkAiStatusBtn = document.getElementById('checkAiStatusBtn');
 
     const whisperInput = document.getElementById('whisperInput');
@@ -481,7 +494,6 @@
 
     // --- Wallet & Status Management ---
     
-    // ✅ FIX: Jednostavna funkcija za spajanje walleta
     async function connectWallet() {
         const provider = window.solana;
         if (!provider?.isPhantom) {
@@ -497,7 +509,6 @@
             return pubkey;
         } catch (err) {
             console.error('[whispr] Wallet connection failed:', err);
-            // Resetiraj stanje ako korisnik odbije spajanje
             userPubkey = null;
             updateAllUIs();
             return null;
@@ -556,7 +567,7 @@
         colorBtn.disabled = true;
       } else {
         passActive = false;
-        colorStatus.textContent = userPubkey ? 'no color active' : 'connect wallet';
+        colorStatus.textContent = userPubkey ? 'no color active' : 'connect wallet first';
         colorBtn.disabled = false;
       }
     }
@@ -565,13 +576,17 @@
       if (!userPubkey) {
         aiStatus.textContent = 'connect wallet to begin...';
         aiAskButton.disabled = true;
-        aiSubButton.disabled = false; // Omogući da korisnik može kliknuti za spajanje
+        aiSubButton.disabled = false;
         aiSubButton.textContent = 'Connect Wallet & Subscribe — 0.01 SOL / month';
-        checkAiStatusBtn.textContent = 'Connect Wallet'; // Gumb sada služi za spajanje
+        aiConnectWalletBtn.disabled = false;
+        aiConnectWalletBtn.textContent = 'Connect Wallet';
+        checkAiStatusBtn.disabled = false; // ✅ FIX: Gumb je UVIJEK omogućen
         return;
       }
       
-      checkAiStatusBtn.textContent = 'Check Status'; // Vrati tekst gumba
+      aiConnectWalletBtn.disabled = true;
+      aiConnectWalletBtn.textContent = 'Wallet Connected';
+      checkAiStatusBtn.disabled = false;
 
       if (aiSubActive) {
         const daysLeft = Math.ceil((aiSubUntil - Date.now()) / (1000 * 60 * 60 * 24));
@@ -602,13 +617,11 @@
         if (!window.solanaWeb3) { alert('Solana web3 is not loaded (hard refresh).'); return; }
 
         try {
-            // ✅ FIX: Osiguraj da je wallet spojen prije plaćanja
             if (!userPubkey) {
                 const newKey = await connectWallet();
-                if (!newKey) return; // Korisnik je odustao od spajanja
+                if (!newKey) return;
             }
 
-            // Ponovno provjeravamo da ne platimo duplo nakon spajanja
             if ((confirmationFn.name.includes('Ai') && aiSubActive) || (confirmationFn.name.includes('Payment') && passActive)) {
                 statusElement.textContent = '✅ Already active!';
                 updateAllUIs();
@@ -650,19 +663,28 @@
         }
     }
     
-    // ✅ FIX: Jedinstvena funkcija za provjeru statusa
-    async function onCheckAnyStatusClick() {
+    async function onCheckColorStatusClick() {
       if (!userPubkey) {
-        await connectWallet();
-      } else {
-        await refreshAllStatuses();
+        colorStatus.textContent = 'connect wallet first';
+        return;
       }
+      await refreshAllStatuses();
+    }
+    
+    // ✅ FIX: Gumb u AI sekciji ima dvostruku ulogu
+    async function onCheckAiStatusClick() {
+        if (!userPubkey) {
+            await connectWallet(); // Ako nije spojen, spoji ga (workaround za refresh)
+        } else {
+            await refreshAllStatuses(); // Ako je spojen, provjeri status
+        }
     }
 
     colorBtn.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyPayment, colorStatus));
     aiSubButton.addEventListener('click', () => handlePayment(0.01, confirmAndVerifyAiSubscription, aiSubStatus));
-    checkStatusBtn.addEventListener('click', onCheckAnyStatusClick);
-    checkAiStatusBtn.addEventListener('click', onCheckAnyStatusClick);
+    checkStatusBtn.addEventListener('click', onCheckColorStatusClick);
+    aiConnectWalletBtn.addEventListener('click', connectWallet);
+    checkAiStatusBtn.addEventListener('click', onCheckAiStatusClick);
 
     // --- WhisprBot AI Logic ---
     function addMessageToChat(message, type) {
@@ -783,6 +805,7 @@
 </script>
 </body>
 </html>
+
 
 
 
