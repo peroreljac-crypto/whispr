@@ -468,7 +468,6 @@
     let freeMessagesUsed = 0;
     const AI_FREE_MESSAGE_LIMIT = 5;
     const profanityFilter = new Filter();
-    // profanityFilter.addWords('neka', 'ružna', 'riječ');
 
     // --- UI Toggling ---
     showAiBtn.addEventListener('click', () => {
@@ -481,46 +480,28 @@
     });
 
     // --- Wallet & Status Management ---
-    const handleWalletReady = () => {
-      const provider = window.solana;
-      if (provider?.isPhantom) {
-        if (provider.publicKey) {
-          console.log('[whispr] Phantom wallet is already connected.');
-          afterWalletConnected(provider.publicKey.toString());
-        } else {
-          console.log('[whispr] Phantom wallet not connected on load.');
-          updateAllUIs(); // Ažuriraj UI za nepovezanog korisnika
+    
+    // ✅ FIX: Jednostavna funkcija za spajanje walleta
+    async function connectWallet() {
+        const provider = window.solana;
+        if (!provider?.isPhantom) {
+            alert('Phantom wallet is not installed.');
+            return null;
         }
-        // Slušaj promjene računa (npr. korisnik se odspoji ili promijeni račun)
-        provider.on('disconnect', () => {
-            console.log('[whispr] Wallet disconnected.');
+        try {
+            const resp = await provider.connect();
+            const pubkey = resp.publicKey.toString();
+            console.log('[whispr] Wallet connected:', pubkey);
+            userPubkey = pubkey;
+            await refreshAllStatuses();
+            return pubkey;
+        } catch (err) {
+            console.error('[whispr] Wallet connection failed:', err);
+            // Resetiraj stanje ako korisnik odbije spajanje
             userPubkey = null;
             updateAllUIs();
-        });
-        provider.on('accountChanged', (newPublicKey) => {
-            if (newPublicKey) {
-                console.log('[whispr] Wallet account changed.');
-                afterWalletConnected(newPublicKey.toString());
-            } else {
-                // This can happen if they disconnect from within Phantom
-                console.log('[whispr] Wallet disconnected via accountChanged.');
-                userPubkey = null;
-                updateAllUIs();
-            }
-        });
-      }
-    };
-
-    if (window.solana?.isPhantom) {
-      handleWalletReady();
-    } else {
-      window.addEventListener('solana#initialized', handleWalletReady, { once: true });
-    }
-
-    async function afterWalletConnected(pubkey) {
-      if (userPubkey === pubkey) return; // Ne radi ništa ako je isti wallet
-      userPubkey = pubkey;
-      await refreshAllStatuses();
+            return null;
+        }
     }
 
     async function refreshAllStatuses() {
@@ -528,7 +509,7 @@
         updateAllUIs();
         return;
       }
-      setLoadingState(true);
+      setLoadingState(true, 'checking status...');
       try {
         const { data } = await getPassStatus({ userPubkey });
         if (!data.ok) throw new Error(data.reason || 'Status check failed');
@@ -543,7 +524,6 @@
         console.error('[whispr] getPassStatus error:', e);
         colorStatus.textContent = 'status check failed';
         aiStatus.textContent = 'status check failed';
-        // Resetiraj stanje u slučaju greške
         passActive = false;
         aiSubActive = false;
       } finally {
@@ -552,14 +532,15 @@
       }
     }
 
-    function setLoadingState(isLoading) {
-        const statusText = isLoading ? 'checking status...' : '';
-        colorStatus.textContent = statusText;
-        aiStatus.textContent = statusText;
+    function setLoadingState(isLoading, text = '') {
         checkStatusBtn.disabled = isLoading;
         checkAiStatusBtn.disabled = isLoading;
         colorBtn.disabled = isLoading;
         aiSubButton.disabled = isLoading;
+        if (isLoading) {
+            colorStatus.textContent = text;
+            aiStatus.textContent = text;
+        }
     }
 
     function updateAllUIs() {
@@ -586,10 +567,12 @@
         aiAskButton.disabled = true;
         aiSubButton.disabled = false; // Omogući da korisnik može kliknuti za spajanje
         aiSubButton.textContent = 'Connect Wallet & Subscribe — 0.01 SOL / month';
-        checkAiStatusBtn.classList.remove('hidden');
+        checkAiStatusBtn.textContent = 'Connect Wallet'; // Gumb sada služi za spajanje
         return;
       }
       
+      checkAiStatusBtn.textContent = 'Check Status'; // Vrati tekst gumba
+
       if (aiSubActive) {
         const daysLeft = Math.ceil((aiSubUntil - Date.now()) / (1000 * 60 * 60 * 24));
         aiStatus.textContent = `Subscribed! Unlimited questions. (~${daysLeft} days left)`;
@@ -597,7 +580,6 @@
         aiAskButton.disabled = false;
         aiSubButton.textContent = 'Subscription Active';
         aiSubButton.disabled = true;
-        checkAiStatusBtn.classList.add('hidden');
       } else {
         const remaining = Math.max(0, AI_FREE_MESSAGE_LIMIT - freeMessagesUsed);
         aiStatus.textContent = `You have ${remaining} free questions remaining.`;
@@ -608,7 +590,6 @@
         if (remaining <= 0) {
           aiStatus.textContent = 'Free limit reached. Subscribe for more.';
         }
-        checkAiStatusBtn.classList.remove('hidden');
       }
     }
 
@@ -621,12 +602,13 @@
         if (!window.solanaWeb3) { alert('Solana web3 is not loaded (hard refresh).'); return; }
 
         try {
-            if (!provider.publicKey) {
-                const resp = await provider.connect();
-                // Event listener će automatski pozvati afterWalletConnected
+            // ✅ FIX: Osiguraj da je wallet spojen prije plaćanja
+            if (!userPubkey) {
+                const newKey = await connectWallet();
+                if (!newKey) return; // Korisnik je odustao od spajanja
             }
-            // Nakon spajanja, userPubkey je postavljen, a statusi osvježeni.
-            // Ponovno provjeravamo da ne platimo duplo.
+
+            // Ponovno provjeravamo da ne platimo duplo nakon spajanja
             if ((confirmationFn.name.includes('Ai') && aiSubActive) || (confirmationFn.name.includes('Payment') && passActive)) {
                 statusElement.textContent = '✅ Already active!';
                 updateAllUIs();
@@ -640,11 +622,11 @@
 
             statusElement.textContent = 'opening Phantom…';
             const tx = new window.solanaWeb3.Transaction({
-                feePayer: provider.publicKey,
+                feePayer: new window.solanaWeb3.PublicKey(userPubkey),
                 recentBlockhash: blockhash,
             }).add(
                 window.solanaWeb3.SystemProgram.transfer({
-                    fromPubkey: provider.publicKey,
+                    fromPubkey: new window.solanaWeb3.PublicKey(userPubkey),
                     toPubkey: new window.solanaWeb3.PublicKey(MERCHANT),
                     lamports: Math.round(price * 1_000_000_000)
                 })
@@ -657,36 +639,23 @@
             const { data } = await confirmationFn({ userPubkey, signature, blockhash, lastValidBlockHeight });
 
             if (data?.ok) {
-                await refreshAllStatuses(); // Najpouzdaniji način za update UI
+                await refreshAllStatuses();
             } else {
                 throw new Error(data?.reason || 'verification failed');
             }
         } catch (e) {
             console.error('Payment error:', e);
             statusElement.textContent = `❌ ${e.message.includes('User rejected') ? 'cancelled' : 'failed'}`;
-            updateAllUIs(); // Vrati gumbe u ispravno stanje
+            updateAllUIs();
         }
     }
     
     // ✅ FIX: Jedinstvena funkcija za provjeru statusa
     async function onCheckAnyStatusClick() {
-      const provider = window.solana;
-      if (!provider?.isPhantom) {
-        alert('Phantom wallet not installed.');
-        return;
-      }
-      try {
-        if (!provider.publicKey) {
-          await provider.connect();
-          // `afterWalletConnected` će biti pozvan automatski preko event listenera
-        } else {
-          // Ako je već spojen, samo osvježi
-          await refreshAllStatuses();
-        }
-      } catch (err) {
-        console.error('Failed to connect wallet for status check', err);
-        colorStatus.textContent = 'wallet connection failed';
-        aiStatus.textContent = 'wallet connection failed';
+      if (!userPubkey) {
+        await connectWallet();
+      } else {
+        await refreshAllStatuses();
       }
     }
 
@@ -715,7 +684,7 @@
         const { data } = await askWhisprBotFn({ question, userPubkey });
         if (data.ok) {
           addMessageToChat(data.answer, 'bot-a');
-          if (!aiSubActive) freeMessagesUsed++; // Optimistično ažuriranje
+          if (!aiSubActive) freeMessagesUsed++;
         } else {
           addMessageToChat(`... ${data.reason || 'an error occurred'} ...`, 'bot-a');
         }
@@ -723,7 +692,7 @@
         console.error('[whispr] askBot error:', e);
         addMessageToChat(`... ${e.message || 'the static is too loud...'}`, 'bot-a');
       } finally {
-        updateAiStatus(); // Ažuriraj brojač i stanje gumba
+        updateAiStatus();
       }
     }
     
@@ -790,7 +759,6 @@
     db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
       const item = snap.val();
       if (!item || !item.text) return;
-      // Prikazujemo whisper koji je poslao drugi korisnik (ili naš vlastiti ako osvježimo stranicu)
       floatWhisper(item.text, false, !!item.colored);
     });
 
@@ -815,6 +783,7 @@
 </script>
 </body>
 </html>
+
 
 
 
