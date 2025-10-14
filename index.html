@@ -539,21 +539,21 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       colorStatus.textContent = 'checking status…';
       aiStatus.textContent = 'checking status...';
       try {
-        // ✅ FIX: Jedan poziv za dohvaćanje svih statusa
+        // ✅ FINAL FIX: Jedan siguran poziv dohvaća SVE potrebne podatke.
         const { data } = await getPassStatus({ userPubkey });
         console.log('[whispr] getPassStatus response:', data);
 
-        // ✅ FIX: Koristi novi, objedinjeni odgovor
+        // Postavi status za Color Pass
         passActive = !!data.colorPass?.active;
         passUntil  = data.colorPass?.active_until || 0;
         renderColorStatus();
 
+        // Postavi status za AI Sub
         aiSubActive = !!data.aiSub?.active;
         aiSubUntil = data.aiSub?.active_until || 0;
-
-        // ✅ FIX: Dohvati samo 'usage' iz baze, jer to nije u getPassStatus
-        const usageSnap = await db.ref(`ai_usage/${userPubkey}`).get();
-        freeMessagesUsed = usageSnap.val()?.count || 0;
+        freeMessagesUsed = data.aiSub?.free_messages_used || 0;
+        
+        // Ažuriraj UI za AI
         updateAiStatus();
 
       } catch (e) {
@@ -897,6 +897,8 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 </script>
 </body>
 </html>
+
+
 
 
 
