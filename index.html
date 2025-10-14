@@ -59,6 +59,9 @@
     .content {
       position: relative;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     a {
@@ -135,10 +138,7 @@
   transition: opacity 0.6s ease;
 }
 .shhh-ghost.show{ opacity: 1; }
-    .content {
-  position: relative;
-  z-index: 5;
-}
+
       .whisper-box{
   display: flex;
   flex-direction: column;
@@ -150,7 +150,7 @@
 }
 
 #whisperInput{
-  width: min(800px, 90vw);
+  width: min(600px, 90vw);
   padding: 10px 12px;
   border: 1px solid #2a2a2a;
   background: rgba(12,12,12,.8);
@@ -162,9 +162,7 @@
   transition: border-color .2s ease, background .2s ease;
 }
 #whisperInput::placeholder{ color:#6f6f6f; }
-    #whisperInput{
-  color: white;
-}
+
 #whisperInput:focus{
   border-color:#555;
   background: rgba(18,18,18,.9);
@@ -204,9 +202,7 @@
 }
 .whisper-status.show{ visibility: visible; }
 
-/* osiguraj da je content iznad pozadine/whispers slojeva */
-.content{ position: relative; z-index: 5; }
-    .user-whisper {
+.user-whisper {
   color: rgba(255, 255, 255, 0.65) !important; /* jače vidljiv */
   text-shadow: 0 0 8px rgba(255,255,255,0.15);
   font-size: 22px !important;
@@ -219,21 +215,6 @@
   color: rgba(255,255,255,0.65);
 }
 
-.whisper-box {
-  margin-top: 25px;   /* razmak ispod teksta */
-  margin-bottom: 25px; /* prije footera */
-}
-    .whispers {
-  pointer-events: none;
-  z-index: 0;
-  position: fixed;
-  inset: 0;
-}
-
-.content {
-  position: relative;
-  z-index: 5;
-}
     .wallet-row{
   margin-top:10px;
   display:flex; gap:10px; align-items:center; justify-content:center;
@@ -266,6 +247,7 @@
   color:#fff;
   border:1px solid rgba(255,255,255,0.06);
   font-family:'VT323', monospace;
+  cursor: pointer;
 }
 #colorWhisperBtn[disabled] {
   opacity: 0.6;
@@ -273,13 +255,57 @@
   background: #222;
 }
 #colorStatus{ font-size:13px; color:#9c9c9c; }
-  <!-- ⬇️ ADD: Style for the new "Check Status" button -->
-<style>
   #checkStatusBtn {
     padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer;
   }
   #checkStatusBtn:hover { background: #333; color: #fff; }
-</style>
+
+    /* === NOVI STILOVI ZA WHISPRBOT === */
+    .hidden { display: none !important; }
+    #showAiBtn {
+        margin-top: 20px;
+        padding: 8px 16px;
+        font-size: 18px;
+        background: linear-gradient(90deg, #1a1a1a, #2b2b2b);
+        border: 1px solid #a8ffa8;
+        color: #a8ffa8;
+        cursor: pointer;
+        border-radius: 6px;
+        font-family: 'VT323', monospace;
+    }
+    #ai-content { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .ai-chat-container {
+        margin-top: 20px;
+        width: min(600px, 90vw);
+        border: 1px solid #2a2a2a;
+        background: rgba(10, 10, 10, 0.85);
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'VT323', monospace;
+    }
+    .ai-chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .ai-chat-header h2 { margin: 0; font-size: 24px; color: #a8ffa8; }
+    #hideAiBtn { background: none; border: none; font-size: 24px; color: #777; cursor: pointer; }
+    #hideAiBtn:hover { color: #fff; }
+
+    .ai-chat-history { height: 200px; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; display: flex; flex-direction: column; gap: 10px; text-align: left; font-size: 16px; }
+    .ai-chat-history p { font-size: 16px; margin: 0; }
+    .ai-chat-history .user-q { color: #888; }
+    .ai-chat-history .bot-a { color: #a8ffa8; }
+
+    .ai-input-row { display: flex; gap: 10px; }
+    #aiQuestionInput { flex-grow: 1; background: rgba(0,0,0,0.5); border: 1px solid #333; color: #eee; padding: 8px 10px; border-radius: 4px; font-family: 'VT323', monospace; font-size: 16px; }
+    #aiQuestionInput:focus { outline: none; border-color: #555; }
+    #aiAskButton { padding: 8px 12px; background: #222; border: 1px solid #333; color: #bbb; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; font-size: 16px; }
+    #aiAskButton:hover:not(:disabled) { background: #333; color: #fff; }
+    #aiAskButton:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .ai-status { font-size: 14px; color: #777; margin-top: 8px; min-height: 1em; }
+    .ai-sub-row { margin-top: 15px; text-align: center; }
+    #aiSubButton { width: 100%; padding: 8px; font-size: 14px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b); border: 1px solid #444; color: #a8ffa8; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; }
+    #aiSubButton:disabled { opacity: 0.5; cursor: not-allowed; }
+    #aiSubStatus { font-size: 13px; color: #9c9c9c; display: block; margin-top: 6px; min-height: 1em; }
+  </style>
 </head>
 <body>
   <div class="matrix-lines"></div>
@@ -290,33 +316,63 @@
     <span>not again...</span>
     <span>silence speaks first.</span>
   </div>
-  <div class="live-whispers"></div>
+  
   <div class="content">
-    <h1>whispr</h1>
     
-    <small>the value is in silence. 🔇</small>
-    <div class="whisper-box">
-  <input id="whisperInput" type="text" maxlength="140"
-         placeholder="send a whispr.">
-  <button id="whisperSend" aria-label="send whisper">send 🔇</button>
-  <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
-  <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
-</div>
-    <!-- ⬇️ ADD: Colored whisper UI -->
-<div class="color-row">
-  <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
-  <span id="colorStatus">no color active</span>
-</div>
-<!-- ⬇️ ADD: Manual status check for users who already paid -->
-<div class="color-row" style="margin-top: 8px; gap: 8px;">
-    <span style="font-size: 13px; color: #9c9c9c;">Already paid?</span>
-    <button id="checkStatusBtn" type="button">Check Status</button>
-</div>
-    <div class="footer-links">
-  <a href="https://x.com/whisprcoin" target="_blank">x</a>
-  <a href="#" target="_blank">solscan (soon)</a>
-</div>
+    <!-- === GLAVNI SADRŽAJ (VIDLJIV ODMAH) === -->
+    <div id="main-content">
+      <h1>whispr</h1>
+      <small>the value is in silence. 🔇</small>
+      
+      <div class="whisper-box">
+        <input id="whisperInput" type="text" maxlength="140" placeholder="send a whispr.">
+        <button id="whisperSend" aria-label="send whisper">send 🔇</button>
+        <div class="whisper-note" aria-hidden="true">anonymous · not saved</div>
+        <div id="whisperStatus" class="whisper-status" aria-live="polite"></div>
+      </div>
+      
+      <div class="color-row">
+        <button id="colorWhisperBtn" type="button">✨ Get colored whispers — 0.01 SOL / 24 h</button>
+        <span id="colorStatus">no color active</span>
+      </div>
+      
+      <div class="color-row" style="margin-top: 8px; gap: 8px;">
+        <span style="font-size: 13px; color: #9c9c9c;">Already paid?</span>
+        <button id="checkStatusBtn" type="button">Check Status</button>
+      </div>
+
+      <button id="showAiBtn">Try WhisprBot AI</button>
+    </div>
+
+    <!-- === AI CHAT SADRŽAJ (SKRIVEN) === -->
+    <div id="ai-content" class="hidden">
+      <div class="ai-chat-container">
+        <div class="ai-chat-header">
+          <h2>WhisprBot AI</h2>
+          <button id="hideAiBtn" title="Back to main page">×</button>
+        </div>
+        <div id="aiChatHistory" class="ai-chat-history">
+          <!-- Poruke se dodaju dinamički -->
+        </div>
+        <div class="ai-input-row">
+          <input id="aiQuestionInput" type="text" placeholder="ask the silence...">
+          <button id="aiAskButton">ask</button>
+        </div>
+        <div id="aiStatus" class="ai-status">connect wallet to begin...</div>
+        <div class="ai-sub-row">
+          <button id="aiSubButton">Subscribe for unlimited answers — 0.01 SOL / month</button>
+          <span id="aiSubStatus"></span>
+        </div>
+      </div>
+    </div>
+
   </div>
+
+  <div class="footer-links">
+    <a href="https://x.com/whisprcoin" target="_blank">x</a>
+    <a href="#" target="_blank">solscan (soon)</a>
+  </div>
+
   <script>
   const whispers = document.querySelectorAll('.whispers span');
   function randomizeWhispers() {
@@ -371,7 +427,6 @@
 
 <!-- ✅ OVAJ NOVI FAJL MORA BITI IZMEĐU buffer.min.js i web3.js -->
 <script src="./buffer-shim.js?v=1.0.1"></script>
-<!-- Ako ti je index.html u /docs, onda je opet ./buffer-setup.js jer je u istom folderu -->
 
 <!-- Solana web3 IIFE (nakon buffer-setup.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.2/lib/index.iife.min.js" crossorigin="anonymous"></script>
@@ -408,17 +463,48 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     const getBlockhash = fns.httpsCallable('getBlockhash');
     const confirmAndVerifyPayment = fns.httpsCallable('confirmAndVerifyPayment');
     const sendWhisperFn = fns.httpsCallable('sendWhisper');
+    // NOVO: Funkcije za AI Bota
+    const askWhisprBotFn = fns.httpsCallable('askWhisprBot');
+    const confirmAndVerifyAiSubscription = fns.httpsCallable('confirmAndVerifyAiSubscription');
 
-    // === UI elementi za colored pass (tvoj gumb i status) ===
+
+    // === UI elementi ===
+    const mainContent = document.getElementById('main-content');
+    const aiContent = document.getElementById('ai-content');
+    const showAiBtn = document.getElementById('showAiBtn');
+    const hideAiBtn = document.getElementById('hideAiBtn');
+    
     const colorBtn    = document.getElementById('colorWhisperBtn');
     const colorStatus = document.getElementById('colorStatus');
     const checkStatusBtn = document.getElementById('checkStatusBtn');
 
-    // globalno stanje
+    const aiChatHistory = document.getElementById('aiChatHistory');
+    const aiQuestionInput = document.getElementById('aiQuestionInput');
+    const aiAskButton = document.getElementById('aiAskButton');
+    const aiStatus = document.getElementById('aiStatus');
+    const aiSubButton = document.getElementById('aiSubButton');
+    const aiSubStatus = document.getElementById('aiSubStatus');
+
+
+    // === Globalno stanje ===
     let userPubkey = null;
     let passActive = false;
     let passUntil  = 0;
-    const profanityFilter = new Filter(); // ✅ ADD: Initialize profanity filter
+    let aiSubActive = false;
+    let aiSubUntil = 0;
+    let freeMessagesUsed = 0;
+    const AI_FREE_MESSAGE_LIMIT = 5;
+    const profanityFilter = new Filter();
+
+    // === UI Toggling (Prikazivanje/skrivanje AI chata) ===
+    showAiBtn.addEventListener('click', () => {
+      mainContent.classList.add('hidden');
+      aiContent.classList.remove('hidden');
+    });
+    hideAiBtn.addEventListener('click', () => {
+      aiContent.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+    });
 
     function renderColorStatus() {
       if (!colorStatus) return;
@@ -431,7 +517,6 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       }
     }
 
-    // ✅ FIX: Reliably check for wallet connection on page load.
     const handleWalletReady = () => {
         const provider = window.solana;
         if (provider?.isPhantom && provider.publicKey) {
@@ -439,6 +524,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
             afterWalletConnected(provider.publicKey.toString());
         } else {
             console.log('[whispr] Phantom wallet not connected on load.');
+            updateAiStatus(); // Ažuriraj AI status i za nepovezanog korisnika
         }
     };
 
@@ -448,43 +534,48 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         window.addEventListener('solana#initialized', handleWalletReady, { once: true });
     }
 
-    // Pozovi ovo KAD SPOJIŠ PHANTOM (vidi korak niže)
     async function afterWalletConnected(pubkey){
       userPubkey = pubkey;
       colorStatus.textContent = 'checking status…';
+      aiStatus.textContent = 'checking status...';
       try {
+        // Provjera za color pass
         const { data } = await getPassStatus({ userPubkey });
         passActive = !!data.active;
         passUntil  = data.active_until || 0;
         renderColorStatus();
         console.log('[whispr] getPassStatus:', data);
+
+        // Provjera za AI sub
+        const subSnap = await db.ref(`ai_subscriptions/${userPubkey}`).get();
+        const usageSnap = await db.ref(`ai_usage/${userPubkey}`).get();
+        const sub = subSnap.val();
+        aiSubActive = sub?.active_until > Date.now();
+        aiSubUntil = sub?.active_until || 0;
+        freeMessagesUsed = usageSnap.val()?.count || 0;
+        updateAiStatus();
+
       } catch (e) {
         console.error('[whispr] getPassStatus error:', e);
         colorStatus.textContent = 'status check failed';
+        aiStatus.textContent = 'status check failed';
       }
     }
 
-    // ✅ ADD: Handler for the new "Check Status" button
     async function onCheckStatusClick() {
         const provider = window.solana;
         if (!provider?.isPhantom) {
             alert('Phantom wallet not installed.');
             return;
         }
-
-        // Connect if not already connected
         if (!provider.publicKey) {
             try {
-                // Try to connect without a popup first, good for returning users
                 await provider.connect({ onlyIfTrusted: true });
             } catch (err) {
-                // If it fails, it means user needs to approve.
-                // We can prompt them to click the main button which handles the full connection.
                 colorStatus.textContent = 'please connect wallet first';
                 return;
             }
         }
-        
         if (provider.publicKey) {
             await afterWalletConnected(provider.publicKey.toString());
         } else {
@@ -492,10 +583,9 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         }
     }
 
-    // Klik na tvoj gumb "✨ Get colored whispers — 0.01 SOL / 24 h"
     async function onColorBtnClick() {
       const provider = window.solana;
-      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F'; // isti kao u backendu
+      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
       const PRICE_SOL = 0.01;
 
       if (!provider?.isPhantom) { alert('Phantom wallet nije instaliran.'); return; }
@@ -503,27 +593,21 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 
       try {
         colorBtn.disabled = true;
-
-        // connect ako treba
         if (!provider.publicKey) {
           const resp = await provider.connect();
           userPubkey = resp.publicKey.toString();
-          // After connecting, check their status once before trying to pay
           await afterWalletConnected(userPubkey);
         } else {
           userPubkey = provider.publicKey.toString();
         }
         
-        // ✅ ADD: If the pass is already active, don't make them pay again.
         if (passActive && passUntil > Date.now()) {
             colorStatus.textContent = '✅ color already active!';
-            // Re-enable the button after a short delay
             setTimeout(() => { colorBtn.disabled = false; renderColorStatus(); }, 1500);
             return;
         }
 
         colorStatus.textContent = 'getting blockhash…';
-        // ⬇️ blockhash s BACKENDA (callable)
         const bh = await getBlockhash();
         const blockhash = bh?.data?.blockhash;
         const lastValidBlockHeight = bh?.data?.lastValidBlockHeight;
@@ -532,8 +616,6 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         }
 
         colorStatus.textContent = 'opening Phantom…';
-
-        // složi transfer
         const fromPubkey = provider.publicKey;
         const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
         const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
@@ -553,11 +635,9 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
           window.solanaWeb3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
         );
 
-        // potpis + slanje kroz Phantom
         colorStatus.textContent = 'awaiting approval in Phantom…';
         const { signature } = await provider.signAndSendTransaction(tx);
         
-        // ✅ FIX: Send signature to backend for confirmation and verification
         colorStatus.textContent = 'confirming and verifying…';
         const { data } = await confirmAndVerifyPayment({
           userPubkey,
@@ -569,11 +649,9 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         if (data?.ok) {
           passActive = true;
           passUntil  = data.active_until || 0;
-          renderColorStatus(); // This will now show the time remaining
-          console.log('[whispr] PASS aktiviran do:', new Date(passUntil).toLocaleString());
+          renderColorStatus();
         } else {
           colorStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
-          console.log('[whispr] payment not found:', data?.reason);
         }
         colorBtn.disabled = false;
       } catch (e) {
@@ -583,24 +661,149 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       }
     }
 
-    // Uveži handler na gumb
     colorBtn?.addEventListener('click', onColorBtnClick);
     checkStatusBtn?.addEventListener('click', onCheckStatusClick);
 
-    // 3) DOM elementi
+    // === WhisprBot AI Logika ===
+    function addMessageToChat(message, type) {
+      if (!aiChatHistory) return;
+      const p = document.createElement('p');
+      p.textContent = message;
+      p.className = type;
+      aiChatHistory.appendChild(p);
+      aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
+    }
+
+    function updateAiStatus() {
+      if (!userPubkey) {
+        aiStatus.textContent = 'connect wallet to begin...';
+        aiAskButton.disabled = true;
+        aiSubButton.disabled = true;
+        return;
+      }
+      aiSubButton.disabled = false;
+      if (aiSubActive) {
+        const daysLeft = Math.ceil((aiSubUntil - Date.now()) / (1000 * 60 * 60 * 24));
+        aiStatus.textContent = `Subscribed! Unlimited questions. (~${daysLeft} days left)`;
+        aiSubStatus.textContent = `✅ Subscription active.`;
+        aiAskButton.disabled = false;
+        aiSubButton.textContent = 'Subscription Active';
+        aiSubButton.disabled = true;
+      } else {
+        const remaining = Math.max(0, AI_FREE_MESSAGE_LIMIT - freeMessagesUsed);
+        aiStatus.textContent = `You have ${remaining} free questions remaining.`;
+        aiSubStatus.textContent = '';
+        aiAskButton.disabled = remaining <= 0;
+        aiSubButton.textContent = 'Subscribe for unlimited answers — 0.01 SOL / month';
+        if (remaining <= 0) {
+          aiStatus.textContent = 'Free limit reached. Subscribe for more.';
+        }
+      }
+    }
+
+    async function askBot() {
+      const question = aiQuestionInput.value.trim();
+      if (!question || !userPubkey || aiAskButton.disabled) return;
+      addMessageToChat(`> ${question}`, 'user-q');
+      aiQuestionInput.value = '';
+      aiAskButton.disabled = true;
+      aiStatus.textContent = 'thinking...';
+      try {
+        const { data } = await askWhisprBotFn({ question, userPubkey });
+        if (data.ok) {
+          addMessageToChat(data.answer, 'bot-a');
+          if (!aiSubActive) freeMessagesUsed++;
+        } else {
+          addMessageToChat(`... ${data.reason || 'an error occurred'} ...`, 'bot-a');
+        }
+      } catch (e) {
+        console.error('[whispr] askBot error:', e);
+        addMessageToChat(`... ${e.message || 'the static is too loud...'}`, 'bot-a');
+      } finally {
+        updateAiStatus();
+      }
+    }
+    
+    addMessageToChat('...i am listening...', 'bot-a');
+    updateAiStatus();
+
+    aiAskButton?.addEventListener('click', askBot);
+    aiQuestionInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); askBot(); } });
+
+    async function onAiSubClick() {
+      const provider = window.solana;
+      const MERCHANT = 'DstrKLkb6W6wYfDyDoMBmgDCTwkh2R4RWv6aQasWUj2F';
+      const PRICE_SOL = 0.01;
+
+      if (!provider?.isPhantom) { alert('Phantom wallet nije instaliran.'); return; }
+      if (!window.solanaWeb3)   { alert('Solana web3 nije učitan (hard refresh).'); return; }
+
+      try {
+        aiSubButton.disabled = true;
+        if (!provider.publicKey) {
+          const resp = await provider.connect();
+          userPubkey = resp.publicKey.toString();
+          await afterWalletConnected(userPubkey);
+        } else {
+          userPubkey = provider.publicKey.toString();
+        }
+        
+        if (aiSubActive) {
+          aiSubStatus.textContent = 'You are already subscribed.';
+          return;
+        }
+
+        aiSubStatus.textContent = 'getting blockhash…';
+        const bh = await getBlockhash();
+        const blockhash = bh?.data?.blockhash;
+        const lastValidBlockHeight = bh?.data?.lastValidBlockHeight;
+        if (!blockhash || !lastValidBlockHeight) throw new Error('No blockhash from backend');
+
+        aiSubStatus.textContent = 'opening Phantom…';
+        const fromPubkey = provider.publicKey;
+        const toPubkey   = new window.solanaWeb3.PublicKey(MERCHANT);
+        const lamports   = Math.round(PRICE_SOL * 1_000_000_000);
+        
+        const tx = new window.solanaWeb3.Transaction({
+          feePayer: fromPubkey,
+          recentBlockhash: blockhash,
+        }).add(
+          window.solanaWeb3.SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
+        );
+
+        aiSubStatus.textContent = 'awaiting approval in Phantom…';
+        const { signature } = await provider.signAndSendTransaction(tx);
+        
+        aiSubStatus.textContent = 'confirming and verifying…';
+        const { data } = await confirmAndVerifyAiSubscription({
+          userPubkey,
+          signature,
+          blockhash,
+          lastValidBlockHeight
+        });
+
+        if (data?.ok) {
+          aiSubActive = true;
+          aiSubUntil  = data.active_until || 0;
+          updateAiStatus();
+        } else {
+          aiSubStatus.textContent = `❌ ${data?.reason || 'verification failed'}`;
+        }
+      } catch (e) {
+        console.error('AI Sub Payment error:', e);
+        aiSubStatus.textContent = '❌ cancelled or failed';
+      } finally {
+        aiSubButton.disabled = aiSubActive;
+      }
+    }
+    aiSubButton?.addEventListener('click', onAiSubClick);
+
+    // === Logika za slanje Whispera ===
     const layer  = document.querySelector('.whispers');
     const input  = document.getElementById('whisperInput');
     const button = document.getElementById('whisperSend');
     const status = document.getElementById('whisperStatus');
 
-    console.log('[whispr] elements:', {layer: !!layer, input: !!input, button: !!button});
-
-    if (!input || !button) {
-      console.error('[whispr] MISSING #whisperInput ili #whisperSend u HTML-u');
-      return;
-    }
-
-    // 4) Helper za nacrtati lebdeći whisper
     function floatWhisper(text, strong, colored = false){
       if (!layer) return;
       const s = document.createElement('span');
@@ -618,12 +821,10 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       setTimeout(()=>s.remove(), 12000);
     }
 
-    // 5) Slanje u bazu
     async function sendWhisper(){
       const text = (input.value || '').trim();
       if (!text) return;
 
-      // ✅ FIX: Client-side profanity check before anything else.
       if (profanityFilter.isProfane(text)) {
           status.textContent = '❌ inappropriate language';
           status.classList.add('show');
@@ -631,35 +832,25 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
               status.classList.remove('show');
               status.textContent = '';
           }, 2500);
-          return; // Stop the function here.
+          return;
       }
 
-      // Disable UI to prevent spamming the send button
       input.disabled = true;
       button.disabled = true;
       status.textContent = 'sending...';
       status.classList.add('show');
-      console.log('[whispr] sending:', text);
 
       try {
-        // Call the secure Cloud Function.
         const { data } = await sendWhisperFn({ text, userPubkey });
-
         if (data.ok) {
-          console.log('[whispr] sent successfully via backend');
           status.textContent = 'sent.';
-          // The live feed will display the whisper, so no optimistic UI needed.
         } else {
-          // If the backend rejects it, show the reason.
           status.textContent = `❌ ${data.reason || 'Could not send'}`;
-          console.error('[whispr] send failed:', data.reason);
         }
       } catch (e) {
-        console.error('[whispr] sendWhisper function error', e);
         status.textContent = '❌ error sending.';
       }
 
-      // Re-enable UI after a delay
       input.value = '';
       setTimeout(() => {
         input.disabled = false;
@@ -669,45 +860,34 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
       }, 2000);
     }
     
-    // 🧹 REMOVED: The client-side auto-clean is no longer needed.
     setInterval(async () => {
       try {
         const snap = await db.ref('whispers').once('value');
         const data = snap.val();
         if (!data) return;
-
         const now = Date.now();
-        const cutoff = now - 20000; // 20 sekundi
-
+        const cutoff = now - 20000;
         Object.entries(data).forEach(([key, val]) => {
           if (val.time < cutoff) {
             db.ref('whispers/' + key).remove();
           }
         });
-
-        console.log('[whispr] auto-clean done');
       } catch (e) {
         console.error('[whispr] auto-clean error:', e);
       }
     }, 20000);
-    // This should be handled by a scheduled backend function for reliability.
 
-    // 6) Eventi (klik + Enter)
     button.addEventListener('click', sendWhisper);
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); }
     });
   
-    // 7) Live feed (zadnjih 20)
     db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
       const item = snap.val();
       if (!item || !item.text) return;
-
-      // The `strong` parameter is false for whispers from other users.
       floatWhisper(item.text, false, !!item.colored);
     });
 
-    // 8) mini check upis
     db.ref('connection-test').set({ok:true, t:Date.now()})
       .then(()=>console.log('[whispr] test write OK'))
       .catch(err=>console.error('[whispr] test write FAIL', err));
@@ -716,6 +896,9 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 </script>
 </body>
 </html>
+
+
+
 
 
 
