@@ -300,7 +300,11 @@
     #aiAskButton:hover:not(:disabled) { background: #333; color: #fff; }
     #aiAskButton:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .ai-status { font-size: 14px; color: #777; margin-top: 8px; min-height: 1em; }
+    .ai-status-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 10px; }
+    #aiStatus { font-size: 14px; color: #777; min-height: 1em; flex-grow: 1; text-align: left; }
+    .check-status-btn { padding: 4px 8px; font-size: 13px; background: #222; border: 1px solid #333; color: #bbb; border-radius: 4px; font-family: 'VT323', monospace; cursor: pointer; flex-shrink: 0; }
+    .check-status-btn:hover { background: #333; color: #fff; }
+
     .ai-sub-row { margin-top: 15px; text-align: center; }
     #aiSubButton { width: 100%; padding: 8px; font-size: 14px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b); border: 1px solid #444; color: #a8ffa8; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; }
     #aiSubButton:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -358,7 +362,10 @@
           <input id="aiQuestionInput" type="text" placeholder="ask the silence...">
           <button id="aiAskButton">ask</button>
         </div>
-        <div id="aiStatus" class="ai-status">connect wallet to begin...</div>
+        <div class="ai-status-row">
+          <span id="aiStatus" class="ai-status">connect wallet to begin...</span>
+          <button id="checkAiStatusBtn" class="check-status-btn">Check Status</button>
+        </div>
         <div class="ai-sub-row">
           <button id="aiSubButton">Subscribe for unlimited answers — 0.01 SOL / month</button>
           <span id="aiSubStatus"></span>
@@ -484,6 +491,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
     const aiStatus = document.getElementById('aiStatus');
     const aiSubButton = document.getElementById('aiSubButton');
     const aiSubStatus = document.getElementById('aiSubStatus');
+    const checkAiStatusBtn = document.getElementById('checkAiStatusBtn');
 
 
     // === Globalno stanje ===
@@ -536,30 +544,36 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 
     async function afterWalletConnected(pubkey){
       userPubkey = pubkey;
+      // Pozovi funkciju koja ažurira SVE statuse
+      await refreshAllStatuses(pubkey);
+    }
+
+    // ✅ NOVO: Funkcija koja dohvaća i postavlja SVE statuse
+    async function refreshAllStatuses(pubkey) {
       colorStatus.textContent = 'checking status…';
       aiStatus.textContent = 'checking status...';
+      checkStatusBtn.disabled = true;
+      checkAiStatusBtn.disabled = true;
       try {
-        // ✅ FINAL FIX: Jedan siguran poziv dohvaća SVE potrebne podatke.
-        const { data } = await getPassStatus({ userPubkey });
+        const { data } = await getPassStatus({ userPubkey: pubkey });
         console.log('[whispr] getPassStatus response:', data);
 
-        // Postavi status za Color Pass
         passActive = !!data.colorPass?.active;
         passUntil  = data.colorPass?.active_until || 0;
         renderColorStatus();
 
-        // Postavi status za AI Sub
         aiSubActive = !!data.aiSub?.active;
         aiSubUntil = data.aiSub?.active_until || 0;
         freeMessagesUsed = data.aiSub?.free_messages_used || 0;
-        
-        // Ažuriraj UI za AI
         updateAiStatus();
 
       } catch (e) {
         console.error('[whispr] getPassStatus error:', e);
         colorStatus.textContent = 'status check failed';
         aiStatus.textContent = 'status check failed';
+      } finally {
+        checkStatusBtn.disabled = false;
+        checkAiStatusBtn.disabled = false;
       }
     }
 
@@ -572,15 +586,32 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         if (!provider.publicKey) {
             try {
                 await provider.connect({ onlyIfTrusted: true });
+                // Nakon spajanja, SVI statusi se provjeravaju kroz afterWalletConnected
             } catch (err) {
                 colorStatus.textContent = 'please connect wallet first';
                 return;
             }
         }
-        if (provider.publicKey) {
-            await afterWalletConnected(provider.publicKey.toString());
+        // Ako je novčanik već spojen, samo osvježi sve
+        await refreshAllStatuses(provider.publicKey.toString());
+    }
+
+    async function onCheckAiStatusClick() {
+        const provider = window.solana;
+        if (!provider?.isPhantom) {
+            alert('Phantom wallet not installed.');
+            return;
+        }
+        if (!provider.publicKey) {
+            try {
+                const resp = await provider.connect();
+                // afterWalletConnected će se pozvati automatski i osvježiti sve
+            } catch (err) {
+                aiStatus.textContent = 'connect wallet to check status';
+            }
         } else {
-            colorStatus.textContent = 'connect wallet first';
+            // Ako je novčanik već spojen, samo osvježi sve
+            await refreshAllStatuses(provider.publicKey.toString());
         }
     }
 
@@ -664,6 +695,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 
     colorBtn?.addEventListener('click', onColorBtnClick);
     checkStatusBtn?.addEventListener('click', onCheckStatusClick);
+    checkAiStatusBtn?.addEventListener('click', onCheckAiStatusClick);
 
     // === WhisprBot AI Logika ===
     function addMessageToChat(message, type) {
@@ -680,6 +712,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         aiStatus.textContent = 'connect wallet to begin...';
         aiAskButton.disabled = true;
         aiSubButton.disabled = true;
+        checkAiStatusBtn.classList.remove('hidden');
         return;
       }
       aiSubButton.disabled = false;
@@ -690,6 +723,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         aiAskButton.disabled = false;
         aiSubButton.textContent = 'Subscription Active';
         aiSubButton.disabled = true;
+        checkAiStatusBtn.classList.add('hidden');
       } else {
         const remaining = Math.max(0, AI_FREE_MESSAGE_LIMIT - freeMessagesUsed);
         aiStatus.textContent = `You have ${remaining} free questions remaining.`;
@@ -699,6 +733,7 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         if (remaining <= 0) {
           aiStatus.textContent = 'Free limit reached. Subscribe for more.';
         }
+        checkAiStatusBtn.classList.remove('hidden');
       }
     }
 
@@ -713,7 +748,10 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
         const { data } = await askWhisprBotFn({ question, userPubkey });
         if (data.ok) {
           addMessageToChat(data.answer, 'bot-a');
-          if (!aiSubActive) freeMessagesUsed++;
+          if (!aiSubActive) {
+            // Ažuriraj lokalno, ali stvarni izvor istine je backend
+            freeMessagesUsed++;
+          }
         } else {
           addMessageToChat(`... ${data.reason || 'an error occurred'} ...`, 'bot-a');
         }
@@ -897,6 +935,8 @@ const Filter=(function(){function e(e){this.list=e||[],this.placeHolder="*",this
 </script>
 </body>
 </html>
+
+
 
 
 
