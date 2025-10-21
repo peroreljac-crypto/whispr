@@ -22,6 +22,8 @@
       text-align: center;
       letter-spacing: 1px;
       backdrop-filter: brightness(0.7) blur(1px);
+      overflow-x: hidden; /* Spriječava horizontalni scroll */
+      overflow-y: auto; /* Omogućava vertikalni scroll ako treba */
     }
     
     h1 {
@@ -63,6 +65,7 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
+      padding: 20px 0;
     }
 
     a {
@@ -77,9 +80,9 @@
     }
 
     .footer-links {
-      position: fixed;
-      bottom: 25px;
-      left: 0;
+      position: relative; /* Promijenjeno s fixed */
+      margin-top: 40px;
+      padding-bottom: 25px;
       width: 100%;
       text-align: center;
       z-index: 2;
@@ -115,6 +118,7 @@
       text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
       animation: whisperMove 15s linear infinite;
       opacity: 0;
+      white-space: nowrap;
     }
 
     @keyframes whisperMove {
@@ -293,16 +297,55 @@
     #aiSubButton { width: 100%; padding: 8px; font-size: 14px; background: linear-gradient(90deg, #1a1a1a, #2b2b2b); border: 1px solid #444; color: #a8ffa8; cursor: pointer; border-radius: 4px; font-family: 'VT323', monospace; }
     #aiSubButton[disabled] { opacity: 0.5; cursor: not-allowed; }
     #aiSubStatus { font-size: 13px; color: #9c9c9c; display: block; margin-top: 6px; min-height: 1em; }
+
+    /* === STILOVI ZA TRENDING LISTU === */
+    .trending-container {
+      margin-top: 40px;
+      width: min(600px, 90vw);
+      background: rgba(10, 10, 10, 0.85);
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 15px;
+      font-family: 'VT323', monospace;
+      color: #ccc;
+      display: none; /* Sakriveno dok JS ne učita podatke */
+      text-align: left;
+    }
+    .trending-container.show { display: block; }
+    .trending-container h3 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      color: #fff;
+      text-align: left;
+    }
+    #trending-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      font-size: 16px;
+      counter-reset: trending-counter;
+    }
+    #trending-list li {
+      padding: 6px 0;
+      border-bottom: 1px solid #222;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+      counter-increment: trending-counter;
+    }
+    #trending-list li::before {
+      content: counter(trending-counter) ". ";
+      color: #666;
+      margin-right: 8px;
+    }
+    #trending-list li:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
   <div class="matrix-lines"></div>
    <div class="whispers">
-    <span>it started again.</span>
-    <span>can you hear it?</span>
-    <span>they woke it up.</span>
-    <span>not again...</span>
-    <span>silence speaks first.</span>
+    <!-- Lebdeće poruke se dodaju dinamički -->
   </div>
   
   <div class="content">
@@ -330,6 +373,14 @@
       </div>
 
       <button id="showAiBtn">Try WhisprBot AI</button>
+
+      <!-- === TRENDING LISTA === -->
+      <div id="trending-whispers" class="trending-container">
+        <h3>Trending whisprs</h3>
+        <ol id="trending-list">
+          <!-- Lista će biti popunjena putem JavaScripta -->
+        </ol>
+      </div>
     </div>
 
     <!-- === AI CHAT SADRŽAJ (SKRIVEN) === -->
@@ -364,27 +415,16 @@
       </div>
     </div>
 
-  </div>
+    <div class="footer-links">
+      <a href="https://x.com/whisprcoin" target="_blank">x</a>
+      <a href="#" target="_blank">solscan (soon)</a>
+    </div>
 
-  <div class="footer-links">
-    <a href="https://x.com/whisprcoin" target="_blank">x</a>
-    <a href="#" target="_blank">solscan (soon)</a>
   </div>
 
   <script>
   // --- Animirani elementi (bez promjena) ---
   (function() {
-    const whispers = document.querySelectorAll('.whispers span');
-    function randomizeWhispers() {
-      whispers.forEach(w => {
-        w.style.top = Math.random() * 100 + '%';
-        w.style.left = Math.random() * 100 + '%';
-        w.style.animationDelay = (Math.random() * 10) + 's';
-      });
-    }
-    randomizeWhispers();
-    setInterval(randomizeWhispers, 15000);
-
     function spawnShhh(){
       const old = document.querySelector('.shhh-ghost');
       if (old) old.remove();
@@ -472,6 +512,9 @@
     const whisperStatus = document.getElementById('whisperStatus');
     const whispersLayer = document.querySelector('.whispers');
 
+    const trendingContainer = document.getElementById('trending-whispers');
+    const trendingList = document.getElementById('trending-list');
+
     // --- Globalno stanje ---
     let userPubkey = null;
     let passActive = false;
@@ -481,6 +524,8 @@
     let freeMessagesUsed = 0;
     const AI_FREE_MESSAGE_LIMIT = 5;
     const profanityFilter = new Filter();
+    // Dodajemo osnovne riječi, možeš proširiti listu
+    profanityFilter.addWords('fuck', 'shit', 'bitch');
 
     // --- UI Toggling ---
     showAiBtn.addEventListener('click', () => {
@@ -562,27 +607,27 @@
     // --- UI Update Functions ---
     function renderColorStatus() {
       if (passActive && passUntil > Date.now()) {
-        const mins = Math.max(0, Math.ceil((passUntil - Date.now())/60000));
-        colorStatus.textContent = `✅ color ACTIVE (~${mins} min left)`;
+        const hours = Math.max(0, Math.ceil((passUntil - Date.now())/3600000));
+        colorStatus.textContent = `✅ color ACTIVE (~${hours}h left)`;
         colorBtn.disabled = true;
       } else {
         passActive = false;
-        colorStatus.textContent = ''; // Clear status text
-        colorBtn.disabled = false; // Always enable the button
+        colorStatus.textContent = '';
+        colorBtn.disabled = false;
       }
-      checkStatusBtn.disabled = false; // Always enable the button
+      checkStatusBtn.disabled = false;
     }
 
     function updateAiStatus() {
       const isConnected = !!userPubkey;
       aiConnectWalletBtn.disabled = isConnected;
       aiConnectWalletBtn.textContent = isConnected ? 'Wallet Connected' : 'Connect Wallet';
-      checkAiStatusBtn.disabled = false; // Always enable the button
+      checkAiStatusBtn.disabled = false;
 
       if (!isConnected) {
         aiStatus.textContent = 'connect wallet to begin...';
         aiAskButton.disabled = true;
-        aiSubButton.disabled = false; // Always enable the button
+        aiSubButton.disabled = false;
         return;
       }
       
@@ -599,7 +644,7 @@
         aiSubStatus.textContent = '';
         aiAskButton.disabled = remaining <= 0;
         aiSubButton.textContent = 'Subscribe for unlimited answers — 0.01 SOL / month';
-        aiSubButton.disabled = false; // Always enable the button
+        aiSubButton.disabled = false;
         if (remaining <= 0) {
           aiStatus.textContent = 'Free limit reached. Subscribe for more.';
         }
@@ -620,7 +665,6 @@
                 if (!newKey) return;
             }
 
-            // Re-check status after potential connection
             if ((confirmationFn.name.includes('Ai') && aiSubActive) || (confirmationFn.name.includes('Payment') && passActive)) {
                 statusElement.textContent = '✅ Already active!';
                 updateAllUIs();
@@ -716,20 +760,18 @@
     aiAskButton.addEventListener('click', askBot);
     aiQuestionInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); askBot(); } });
 
-    // --- Whisper Sending Logic ---
-    function floatWhisper(text, strong, colored = false){
+    // --- Whisper Sending & Display Logic ---
+    function floatWhisper(text, strong, colored = false, delay = 0){
       const s = document.createElement('span');
       s.textContent = text;
-      s.style.position = 'absolute';
       s.style.top  = (10 + Math.random()*80) + '%';
       s.style.left = (5 + Math.random()*90) + '%';
       s.style.color = colored ? '#a8ffa8' : (strong ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)');
       s.style.textShadow = `0 0 10px ${colored ? '#a8ffa8' : 'rgba(255,255,255,0.1)'}`;
       s.style.fontSize = (18 + Math.floor(Math.random()*6)) + 'px';
-      s.style.animation = 'whisperMove 12s linear 1';
-      s.style.opacity = '0';
+      s.style.animationDelay = `${delay}s`;
+      s.style.animationDuration = (15 + Math.random() * 10) + 's'; // Varijabilno trajanje
       whispersLayer.appendChild(s);
-      setTimeout(()=>s.remove(), 12000);
     }
 
     async function sendWhisper(){
@@ -752,6 +794,7 @@
         const { data } = await sendWhisperFn({ text, userPubkey });
         if (data.ok) {
           whisperStatus.textContent = 'sent.';
+          // Ne moramo ručno crtati, `child_added` će to odraditi
         } else {
           whisperStatus.textContent = `❌ ${data.reason || 'Could not send'}`;
         }
@@ -771,26 +814,87 @@
     whisperSendBtn.addEventListener('click', sendWhisper);
     whisperInput.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); sendWhisper(); } });
   
-    // --- Live Feed & Cleanup ---
-    db.ref('whispers').orderByChild('time').limitToLast(20).on('child_added', snap => {
+    // --- Live Feed, Initial Load, Cleanup & Trending ---
+    const twentyFourHoursAgo = () => Date.now() - (24 * 60 * 60 * 1000);
+
+    // 1. Učitaj postojeće poruke pri otvaranju stranice
+    async function loadInitialWhispers() {
+        try {
+            const snap = await db.ref('whispers').orderByChild('time').startAt(twentyFourHoursAgo()).once('value');
+            const data = snap.val();
+            if (!data) return;
+            
+            whispersLayer.innerHTML = ''; // Očisti stare (hardkodirane)
+            Object.values(data).forEach((item, index) => {
+                // Dodajemo mali delay da ne krenu sve odjednom
+                floatWhisper(item.text, false, !!item.colored, Math.random() * 15);
+            });
+            console.log(`[whispr] Loaded ${Object.keys(data).length} initial whispers.`);
+        } catch (e) {
+            console.error('[whispr] Initial load error:', e);
+        }
+    }
+
+    // 2. Slušaj za nove poruke
+    db.ref('whispers').orderByChild('time').startAt(Date.now()).on('child_added', snap => {
       const item = snap.val();
       if (!item || !item.text) return;
       floatWhisper(item.text, false, !!item.colored);
     });
 
+    // 3. Logika za trending listu
+    async function updateTrendingWhispers() {
+      try {
+        const snap = await db.ref('whispers').orderByChild('time').startAt(twentyFourHoursAgo()).once('value');
+        const data = snap.val();
+        if (!data) {
+          trendingContainer.classList.remove('show');
+          return;
+        }
+
+        const counts = {};
+        Object.values(data).forEach(whisper => {
+          if (whisper.text) {
+            const text = whisper.text.toLowerCase().trim();
+            counts[text] = (counts[text] || 0) + 1;
+          }
+        });
+
+        const sorted = Object.entries(counts).sort(([,a],[,b]) => b - a);
+        const top3 = sorted.slice(0, 3);
+
+        if (top3.length > 0) {
+          trendingList.innerHTML = top3.map(([text]) => `<li>${text}</li>`).join('');
+          trendingContainer.classList.add('show');
+        } else {
+          trendingContainer.classList.remove('show');
+        }
+      } catch (e) {
+        console.error('[whispr] trending update error:', e);
+      }
+    }
+
+    // 4. Periodično čišćenje starih poruka
     setInterval(async () => {
       try {
-        const snap = await db.ref('whispers').orderByChild('time').endAt(Date.now() - 20000).get();
+        const oldWhispersRef = db.ref('whispers').orderByChild('time').endAt(twentyFourHoursAgo());
+        const snap = await oldWhispersRef.once('value');
         const data = snap.val();
         if (!data) return;
+
         const updates = {};
         Object.keys(data).forEach(key => { updates[key] = null; });
         db.ref('whispers').update(updates);
+        console.log(`[whispr] auto-clean done, removed ${Object.keys(data).length} whispers.`);
       } catch (e) { console.error('[whispr] auto-clean error:', e); }
-    }, 20000);
+    }, 3600000); // Svakih sat vremena
 
     // --- Inicijalizacija ---
-    updateAllUIs(); // Prvo postavljanje UI-a na temelju početnog stanja
+    updateAllUIs();
+    loadInitialWhispers();
+    updateTrendingWhispers();
+    setInterval(updateTrendingWhispers, 30000); // Osvježi trending svakih 30 sekundi
+
     db.ref('connection-test').set({ok:true, t:Date.now()})
       .then(()=>console.log('[whispr] test write OK'))
       .catch(err=>console.error('[whispr] test write FAIL', err));
@@ -799,6 +903,7 @@
 </script>
 </body>
 </html>
+
 
 
 
