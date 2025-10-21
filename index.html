@@ -210,6 +210,13 @@
     }
     .whisper-status.show { visibility: visible; }
 
+    #main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
     .content small {
       display: block;
       margin-top: 10px;
@@ -302,15 +309,15 @@
     /* === STILOVI ZA TRENDING LISTU === */
     .trending-container {
       margin-top: 40px;
-      width: min(450px, 90vw); /* Smanjena širina */
-      background: rgba(10, 10, 10, 0.7); /* Povećana prozirnost */
+      width: min(450px, 90vw);
+      background: rgba(10, 10, 10, 0.7);
       border: 1px solid #2a2a2a;
       border-radius: 8px;
       padding: 15px;
       font-family: 'VT323', monospace;
       color: #ccc;
       display: none; /* Sakriveno dok JS ne učita podatke */
-      text-align: center; /* Centriranje sadržaja unutar boxa */
+      text-align: center;
     }
     .trending-container.show { display: block; }
     .trending-container h3 {
@@ -905,6 +912,8 @@
 </script>
 </body>
 </html>
+
+
 
 
 
